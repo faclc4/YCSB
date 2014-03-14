@@ -14,7 +14,7 @@ import java.util.Vector;
  *
  * @author Fábio Coelho
  */
-public class TestYCSB extends DB{
+public class InfinispanGlue extends DB{
     
     public static final int OK=0;
     public static final int ERROR=-1;

@@ -639,14 +639,14 @@ public class File_CoreWorkload extends Workload {
 
     public String fetchKeyName(long keynum,Object thread_state) {
 
-        ClientThreadState state = (ClientThreadState) thread_state;
-        Jedis redis_client  = state.getRedis_connection();
+        //ClientThreadState state = (ClientThreadState) thread_state;
+        //Jedis redis_client  = state.getRedis_connection();
 
         String key = "";
 
         if(KEY_INPUT_SOURCE==REDIS_INPUT){
 
-            key = redis_client.get(keynum+"");
+        //    key = redis_client.get(keynum+"");
 
             if(key ==null){
                 System.out.println("Null on key: "+Long.toString(keynum));
@@ -662,23 +662,28 @@ public class File_CoreWorkload extends Workload {
     
     
     
-    HashMap<Object,Object> buildValues() {
+    public HashMap<Object,Object> buildValues(String keyname) {
         HashMap<Object,Object> values = new HashMap<Object,Object>();
+        
+        List<Long> versions = kvalues.get(Long.parseLong(keyname));
 
-        for (int i = 0; i < fieldcount; i++) {
-            String fieldkey = "field" + i;
+        for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-            values.put(fieldkey, data);
+            values.put(version, data);
         }
         return values;
     }
 
-    HashMap<Object,Object> buildUpdate() {
+    public HashMap<Object,Object> buildUpdate(String keyname) {
         //update a random field
         HashMap<Object,Object> values = new HashMap<Object,Object>();
-        String fieldname = "field" + fieldchooser.nextString();
+        
+        List<Long> versions = kvalues.get(Long.parseLong(keyname));
+        Random r = new Random();
+        int random = r.nextInt(versions.size());
+
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-        values.put(fieldname, data);
+        values.put(versions.get(random), data);
         return values;
     }
 
@@ -691,9 +696,9 @@ public class File_CoreWorkload extends Workload {
     public boolean doInsert(DB db, Object threadstate) {
         int keynum = keysequence.nextInt();
         //String dbkey = buildKeyName(keynum);
-        String dbkey = fetchKeyName(keynum, null);
+        String dbkey = fetchKeyName(keynum, threadstate);
 
-        HashMap<Object,Object> values = buildValues();
+        HashMap<Object,Object> values = buildValues(dbkey);
         if (db.insert(table, dbkey, values) == 0)
             return true;
         else
@@ -795,6 +800,7 @@ public class File_CoreWorkload extends Workload {
     }
 
     public void doTransactionReadModifyWrite(DB db) {
+        /*
         //choose a random key
         int keynum = nextKeynum();
 
@@ -831,6 +837,7 @@ public class File_CoreWorkload extends Workload {
         long en = System.currentTimeMillis();
 
         Measurements.getMeasurements().measure("READ-MODIFY-WRITE", (int) (en - st));
+        */
     }
 
 
@@ -838,16 +845,17 @@ public class File_CoreWorkload extends Workload {
         //choose a random key
         int keynum = nextKeynum();
 
-        String keyname = buildKeyName(keynum);
+        //String keyname = buildKeyName(keynum);
+        String keyname = fetchKeyName(keynum,null);
 
         HashMap<Object,Object> values;
 
         if (writeallfields) {
             //new data for all the fields
-            values = buildValues();
+            values = buildValues(keyname);
         } else {
             //update a random field
-            values = buildUpdate();
+            values = buildUpdate(keyname);
         }
 
         db.update(table, keyname, values);
@@ -859,7 +867,7 @@ public class File_CoreWorkload extends Workload {
 
         String dbkey = buildKeyName(keynum);
 
-        HashMap<Object,Object> values = buildValues();
+        HashMap<Object,Object> values = buildValues(dbkey);
         db.insert(table, dbkey, values);
     }
     
