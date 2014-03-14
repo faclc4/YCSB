@@ -1,0 +1,59 @@
+import com.yahoo.ycsb.DB;
+import com.yahoo.ycsb.DBException;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.Vector;
+/**
+ *
+ * @author Fábio Coelho
+ */
+public class TestYCSB extends DB{
+    
+    public static final int OK=0;
+    public static final int ERROR=-1;
+    
+    public void init() throws DBException{
+	System.out.println("Client started")
+        
+    }
+    
+
+    @Override
+    public int read(String table, String key, Set<String> columns, HashMap<String, String> values) {
+	System.out.println("This is  Read")
+        return OK;
+    }
+
+    @Override
+    public int scan(String table, String key, int count, Set<String> columns, Vector<HashMap<String, String>> res) {
+	System.out.println("This is  scan")
+        return OK;
+    }
+
+    @Override
+    public int update(String table, String key, HashMap<String, String> values) {
+	System.out.println("This is  update")
+	return OK;
+    }
+
+    @Override
+    public int insert(String table, String key, HashMap<String, String> values) {
+	System.out.println("This is a insert")
+		System.out.println("key is: "+key)
+        return OK;
+    }
+
+    @Override
+    public int delete(String table, String key) {
+        return OK;
+    }
+
+  
+    
+}
