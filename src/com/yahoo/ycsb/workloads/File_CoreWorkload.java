@@ -25,8 +25,13 @@ import com.yahoo.ycsb.measurements.ResultStorage;
 import redis.clients.jedis.Jedis;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.xml.sax.SAXException;
 
 /**
  * The core benchmark scenario. Represents a set of clients doing simple CRUD operations. The relative
@@ -329,9 +334,9 @@ public class File_CoreWorkload extends Workload {
 
     public static boolean KEY_INPUT_SOURCE = FILE_INPUT;
 
-    public static ArrayList<Long> files_keys;
+    public static ArrayList<BigInteger> files_keys;
     
-    public static Map<Long,List<Long>> kvalues;
+    public static Map<BigInteger,List<Long>> kvalues;
 
     public static String redis_connection_info;
 
@@ -484,9 +489,9 @@ public class File_CoreWorkload extends Workload {
 
         use_file_columns = Boolean.parseBoolean(p.getProperty(USE_FILE_COLUMNS_PROPERTY, USE_FILE_COLUMNS_DEFAULT_PROPERTY));
 
-        files_keys = new ArrayList<Long>();
+        files_keys = new ArrayList<BigInteger>();
         
-        kvalues = new HashMap<Long,List<Long>>();
+        kvalues = new HashMap<BigInteger,List<Long>>();
 
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
         String redis_database_info = p.getProperty(REDIS_DATABASE_PROPERTY);
@@ -497,54 +502,11 @@ public class File_CoreWorkload extends Workload {
         }
 
         if (keys_file_path != null) {
-            FileInputStream input_file_stream;
-            try {
-                input_file_stream = new FileInputStream(keys_file_path);
-            } catch (FileNotFoundException e) {
-                throw new WorkloadException("Error when opening file for key retrieval: " + keys_file_path, e);
-            }
-
-            BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
             /*
-            try {
-                String line = null;
-
-                while ((line = input_reader.readLine()) != null) {
-                    files_keys.add(line.trim());
-                }
-            } catch (Exception e) {
-                throw new WorkloadException("Error when opening keys files", e);
-            }
-
-            try {
-                input_file_stream.close();
-            } catch (IOException e) {
-                throw new WorkloadException("Error when closing file after call retrieval.", e);
-            }
+            readXML(keys_file_path);
             */
-            try {
-                String line = null;
-
-                while ((line = input_reader.readLine()) != null) {
-                    String [] aux = line.split(" ");
-                    Long kvalueId = Long.parseLong(aux[0]);
-                    List <Long> revisions = new ArrayList<Long>();
-                    
-                    for(int x = 1 ; x< aux.length ; x++){
-                        revisions.add(Long.parseLong(aux[x]));
-                    }
-                    files_keys.add(kvalueId);
-                    kvalues.put(kvalueId, revisions);
-                }
-            } catch (Exception e) {
-                throw new WorkloadException("Error when opening keys files", e);
-            }
-
-            try {
-                input_file_stream.close();
-            } catch (IOException e) {
-                throw new WorkloadException("Error when closing file after call retrieval.", e);
-            }
+            
+            readDump(keys_file_path);
             
         }
 
@@ -595,7 +557,55 @@ public class File_CoreWorkload extends Workload {
         last_scan = System.currentTimeMillis();
         
     }
+    
+    public void readXML(String keys_file_path) throws WorkloadException{
+        FileInputStream input_file_stream;
+            try {
+                input_file_stream = new FileInputStream(keys_file_path);
+            } catch (FileNotFoundException e) {
+                throw new WorkloadException("Error when opening file for key retrieval: " + keys_file_path, e);
+            }
 
+            BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
+            try {
+                String line = null;
+
+                while ((line = input_reader.readLine()) != null) {
+                    String [] aux = line.split(" ");
+                    //Long kvalueId = Long.parseLong(aux[0]);
+                    BigInteger kvalueId = BigInteger.valueOf(Long.parseLong(aux[0]));
+                    List <Long> revisions = new ArrayList<Long>();
+                    
+                    for(int x = 1 ; x< aux.length ; x++){
+                        revisions.add(Long.parseLong(aux[x]));
+                    }
+                    files_keys.add(kvalueId);
+                    kvalues.put(kvalueId, revisions);
+                }
+            } catch (Exception e) {
+                throw new WorkloadException("Error when opening keys files", e);
+            }
+
+            try {
+                input_file_stream.close();
+            } catch (IOException e) {
+                throw new WorkloadException("Error when closing file after call retrieval.", e);
+            }
+    }
+
+    public void readDump(String keys_file_path){
+        CompressedDumpParser  handler = new CompressedDumpParser();
+            try {
+                //HashMap<BigInteger, List<Long>> data = handler.readData(new FileInputStream("dump.obj"));
+                kvalues = handler.readData(new FileInputStream(keys_file_path));
+                
+                for(BigInteger key : kvalues.keySet()){
+                    files_keys.add(key);
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+            }
+    }
 
     @Override
     public Object initThread(Properties p, int mythreadid, int threadcount) throws WorkloadException {
@@ -665,7 +675,8 @@ public class File_CoreWorkload extends Workload {
     public HashMap<Object,Object> buildValues(String keyname) {
         HashMap<Object,Object> values = new HashMap<Object,Object>();
         
-        List<Long> versions = kvalues.get(Long.parseLong(keyname));
+        //List<Long> versions = kvalues.get(Long.parseLong(keyname));
+        List<Long> versions = kvalues.get(BigInteger.valueOf(Long.parseLong(keyname)));
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
@@ -678,7 +689,8 @@ public class File_CoreWorkload extends Workload {
         //update a random field
         HashMap<Object,Object> values = new HashMap<Object,Object>();
         
-        List<Long> versions = kvalues.get(Long.parseLong(keyname));
+        //List<Long> versions = kvalues.get(Long.parseLong(keyname));
+        List<Long> versions = kvalues.get(BigInteger.valueOf(Long.parseLong(keyname)));
         Random r = new Random();
         int random = r.nextInt(versions.size());
 
@@ -766,7 +778,7 @@ public class File_CoreWorkload extends Workload {
         //This function receives the key name and based on the ammount of versions for that key, computes a random index.
         //The index is then used to return the corresponding value from the version list.
         Long version;
-        List<Long> versions = kvalues.get(Long.parseLong(keyname));
+        List<Long> versions = kvalues.get(BigInteger.valueOf(Long.parseLong(keyname)));
         
         //int random = (int) Math.random() * versions.size();
         Random r = new Random();
