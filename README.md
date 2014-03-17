@@ -1,6 +1,6 @@
 YCSB
 ====
-To compile run YCSB:
+To compile YCSB:
 
 ant 
 
