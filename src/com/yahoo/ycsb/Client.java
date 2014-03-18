@@ -139,6 +139,8 @@ class ClientThread extends Thread
 {
 	DB _db;
 	boolean _dotransactions;
+        boolean _replay;
+        boolean _speedup;
 	Workload _workload;
 	int _opcount;
 	double _target;
@@ -162,11 +164,13 @@ class ClientThread extends Thread
 	 * @param opcount the number of operations (transactions or inserts) to do
 	 * @param targetperthreadperms target number of operations per thread per ms
 	 */
-	public ClientThread(DB db, boolean dotransactions, Workload workload, int threadid, int threadcount, Properties props, int opcount, double targetperthreadperms)
+	public ClientThread(DB db, boolean replay, boolean speedup, boolean dotransactions, Workload workload, int threadid, int threadcount, Properties props, int opcount, double targetperthreadperms)
 	{
 		//TODO: consider removing threadcount and threadid
 		_db=db;
 		_dotransactions=dotransactions;
+                _speedup = speedup;
+                _replay = replay;
 		_workload=workload;
 		_opcount=opcount;
 		_opsdone=0;
@@ -223,6 +227,8 @@ class ClientThread extends Thread
 		
 		try
 		{
+                    if(!_replay){
+
 			if (_dotransactions)
 			{
 				long st=System.currentTimeMillis();
@@ -294,6 +300,95 @@ class ClientThread extends Thread
 					}
 				}
 			}
+                    }
+                    //#######################################################################################
+                    //#######################################################################################
+                    //
+                    //if its the replay operation mode:
+                    //
+                    //#######################################################################################
+                    //#######################################################################################
+                    else{
+                        if (_dotransactions)
+			{
+				long st=System.currentTimeMillis();
+
+				while (((_opcount == 0) || (_opsdone < _opcount)) && !_workload.isStopRequested())
+				{
+
+					if (!_workload.doTransaction(_db,_workloadstate))
+					{
+						break;
+					}
+
+					_opsdone++;
+
+					//throttle the operations
+					if (_target>0)
+					{
+						//this is more accurate than other throttling approaches we have tried,
+						//like sleeping for (1/target throughput)-operation latency,
+						//because it smooths timing inaccuracies (from sleep() taking an int, 
+						//current time in millis) over many operations
+						while (System.currentTimeMillis()-st<((double)_opsdone)/_target)
+						{
+							try
+							{
+								sleep(1);
+							}
+							catch (InterruptedException e)
+							{
+							  // do nothing.
+							}
+
+						}
+					}
+				}
+			}
+			else
+			{
+				long st=System.currentTimeMillis();
+
+				while (((_opcount == 0) || (_opsdone < _opcount)) && !_workload.isStopRequested())
+				{
+                                        //ler lista de chaves por timestamp;
+                                        //calcular diferença entre timestamps --> diff
+                                        //efetuar a operacao
+                                        //esperar diff --> sleep(diff)
+                                    
+                                    
+					if (!_workload.doReplayInsert(_db,_workloadstate,_speedup))
+					{
+						break;
+					}
+
+					_opsdone++;
+
+					//throttle the operations
+					if (_target>0)
+					{
+						//this is more accurate than other throttling approaches we have tried,
+						//like sleeping for (1/target throughput)-operation latency,
+						//because it smooths timing inaccuracies (from sleep() taking an int, 
+						//current time in millis) over many operations
+						while (System.currentTimeMillis()-st<((double)_opsdone)/_target)
+						{
+							try 
+							{
+								sleep(1);
+							}
+							catch (InterruptedException e)
+							{
+							  // do nothing.
+							}
+						}
+					}
+				}
+			}
+                        
+                        
+                        
+                    }       
 		}
 		catch (Exception e)
 		{
@@ -348,6 +443,8 @@ public class Client
 		System.out.println("  -target n: attempt to do n operations per second (default: unlimited) - can also\n" +
 				"             be specified as the \"target\" property using -p");
 		System.out.println("  -load:  run the loading phase of the workload");
+                System.out.println("  -replay: run YCSB in REPLAY mode ");
+                System.out.println("  -speedup : Should be used together with -replay tag. When used, inserts in replay mode are twice as fast ");
 		System.out.println("  -t:  run the transactions phase of the workload (default)");
 		System.out.println("  -db dbname: specify the name of the DB to use (default: com.yahoo.ycsb.BasicDB) - \n" +
 				"              can also be specified as the \"db\" property using -p");
@@ -435,6 +532,8 @@ public class Client
 		Properties props=new Properties();
 		Properties fileprops=new Properties();
 		boolean dotransactions=true;
+                boolean replay=false;
+                boolean speedup = false;
 		int threadcount=1;
 		int target=0;
 		boolean status=false;
@@ -488,6 +587,16 @@ public class Client
 			else if (args[argindex].compareTo("-s")==0)
 			{
 				status=true;
+				argindex++;
+			}
+                        else if (args[argindex].compareTo("-replay")==0)
+			{
+				replay=true;
+				argindex++;
+			}
+                        else if (args[argindex].compareTo("-speedup")==0)
+			{
+				speedup = true;
 				argindex++;
 			}
 			else if (args[argindex].compareTo("-db")==0)
@@ -718,7 +827,7 @@ public class Client
 				System.exit(0);
 			}
 
-			Thread t=new ClientThread(db,dotransactions,workload,threadid,threadcount,props,opcount/threadcount,targetperthreadperms);
+			Thread t=new ClientThread(db,replay,speedup,dotransactions,workload,threadid,threadcount,props,opcount/threadcount,targetperthreadperms);
 
 			threads.add(t);
 			//t.start();

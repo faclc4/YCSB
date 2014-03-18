@@ -336,7 +336,11 @@ public class File_CoreWorkload extends Workload {
 
     public static ArrayList<BigInteger> files_keys;
     
+    public static ArrayList<Long> sorted_files_keys;
+    
     public static Map<BigInteger,List<Long>> kvalues;
+    
+    public Map<Long,BigInteger> sortedkvales;
 
     public static String redis_connection_info;
 
@@ -491,7 +495,11 @@ public class File_CoreWorkload extends Workload {
 
         files_keys = new ArrayList<BigInteger>();
         
+        sorted_files_keys = new ArrayList<Long>();
+        
         kvalues = new HashMap<BigInteger,List<Long>>();
+        
+        sortedkvales = new TreeMap<Long,BigInteger>();
 
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
         String redis_database_info = p.getProperty(REDIS_DATABASE_PROPERTY);
@@ -596,12 +604,19 @@ public class File_CoreWorkload extends Workload {
     public void readDump(String keys_file_path){
         CompressedDumpParser  handler = new CompressedDumpParser();
             try {
-                //HashMap<BigInteger, List<Long>> data = handler.readData(new FileInputStream("dump.obj"));
                 kvalues = handler.readData(new FileInputStream(keys_file_path));
                 
                 for(BigInteger key : kvalues.keySet()){
                     files_keys.add(key);
+                    for(Long version : kvalues.get(key)){
+                        sortedkvales.put(version, key);
+                    }
                 }
+                
+                for(Long v : sortedkvales.keySet()){
+                    sorted_files_keys.add(v);
+                }
+                
             } catch (Exception ex) {
                 Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
             }
@@ -671,7 +686,6 @@ public class File_CoreWorkload extends Workload {
     }
     
     
-    
     public HashMap<Object,Object> buildValues(String keyname) {
         HashMap<Object,Object> values = new HashMap<Object,Object>();
         
@@ -707,7 +721,6 @@ public class File_CoreWorkload extends Workload {
      */
     public boolean doInsert(DB db, Object threadstate) {
         int keynum = keysequence.nextInt();
-        //String dbkey = buildKeyName(keynum);
         String dbkey = fetchKeyName(keynum, threadstate);
 
         HashMap<Object,Object> values = buildValues(dbkey);
@@ -715,6 +728,44 @@ public class File_CoreWorkload extends Workload {
             return true;
         else
             return false;
+    }
+    
+    public boolean doReplayInsert(DB db, Object threadstate, boolean speedup) {
+        //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
+        int keynum = keysequence.nextInt();
+        Long version1 = sorted_files_keys.get(keynum);
+        String db_key = String.valueOf(sortedkvales.get(version1));
+        
+        ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
+        
+        HashMap<Object,Object> value = new HashMap<Object,Object>();
+        value.put(version1, data);
+        
+        
+        //if there is a next key so that the difference can be calculated...
+        if(keynum+1 < sorted_files_keys.size()){
+            Long version2 = sorted_files_keys.get(keynum+1);
+            Long diff = version2-version1;
+            
+            if(speedup)diff = diff/2;
+            
+            if (db.insert(table, db_key, value) == 0){
+                try {
+                    Thread.sleep(diff);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return true;
+            }
+            else
+                return false;
+        }
+        else{     
+            if (db.insert(table, db_key, value) == 0)
+                return true;
+            else
+                return false;
+        }
     }
 
     /**
@@ -798,7 +849,7 @@ public class File_CoreWorkload extends Workload {
         db.read(table, keyname, version);
     }
     
-        public void doTransactionReadRange(DB db,Object thread_state) {
+    public void doTransactionReadRange(DB db,Object thread_state) {
         //choose a random key
         int keynum = nextKeynum();
 
@@ -851,7 +902,6 @@ public class File_CoreWorkload extends Workload {
         Measurements.getMeasurements().measure("READ-MODIFY-WRITE", (int) (en - st));
         */
     }
-
 
     public void doTransactionUpdate(DB db) {
         //choose a random key

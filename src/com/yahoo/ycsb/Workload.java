@@ -83,6 +83,8 @@ public abstract class Workload
        */
       public abstract boolean doInsert(DB db, Object threadstate);
       
+      public abstract boolean doReplayInsert(DB db, Object threadstate, boolean speedup);
+      
       /**
        * Do one transaction operation. Because it will be called concurrently from multiple client threads, this 
        * function must be thread safe. However, avoid synchronized, or the threads will block waiting for each 
