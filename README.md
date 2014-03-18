@@ -1,6 +1,6 @@
 YCSB
 ====
-To compile run YCSB:
+To compile YCSB:
 
 ant 
 
@@ -18,8 +18,8 @@ To configure workload modify the workload file:
 ====
 To LOAD data run:
 
-./bin/ycsb.sh com.yahoo.ycsb.Client -load -db InfinispanGlue -p keys_file=dump.txt -P file_workloads/workload_1
+./bin/ycsb.sh com.yahoo.ycsb.Client -load -db InfinispanGlue -p keys_file=dump.obj -P file_workloads/workload_1
 
 To RUN the workload:
 
-./bin/ycsb.sh com.yahoo.ycsb.Client -t -db InfinispanGlue -p keys_file=dump.txt -P file_workloads/workload_1
+./bin/ycsb.sh com.yahoo.ycsb.Client -t -db InfinispanGlue -p keys_file=dump.obj -P file_workloads/workload_1
