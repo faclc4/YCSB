@@ -82,6 +82,7 @@ if [ "$YCSB_HEAP_SIZE" != "" ]; then
 fi
 
 # Set the classpath.
+CLASSPATH=$CLASSPATH:.
 
 if [ "$CLASSPATH" != "" ]; then
   CLASSPATH=${CLASSPATH}:$JAVA_HOME/lib/tools.jar
