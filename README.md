@@ -47,7 +47,7 @@ To configure workload modify the workload file:
 
 ./bin/ycsb.sh com.yahoo.ycsb.Client -t **-replay** -db InfinispanGlue -p keys_file=file_workloads/dump.obj -p replay_keys_file=file_workloads/tracesX -P file_workloads/workload_1
 
-  speedup: just add the -speedup tag to the previous command.
+  speedup: just add the **-speedup** tag to the previous command.
 
 
 
