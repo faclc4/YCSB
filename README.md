@@ -39,11 +39,11 @@ To configure workload modify the workload file:
 
 **There are 2 modes to RUN the workload:**
 
-1. REGULAR: this is the standart YCSB operation, performing operations according to workload.
+- REGULAR: this is the standart YCSB operation, performing operations according to workload.
 
 ./bin/ycsb.sh com.yahoo.ycsb.Client -t -db InfinispanGlue -p keys_file=file_workloads/dump.obj -p replay_keys_file=file_workloads/tracesX -P file_workloads/workload_1
 
-2. REPLAY: this mode replays the wikipedia traces as in the tracesX file.
+- REPLAY: this mode replays the wikipedia traces as in the tracesX file.
 
 ./bin/ycsb.sh com.yahoo.ycsb.Client -t **-replay** -db InfinispanGlue -p keys_file=file_workloads/dump.obj -p replay_keys_file=file_workloads/tracesX -P file_workloads/workload_1
 
