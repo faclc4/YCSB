@@ -8,7 +8,8 @@ To compile the glue class to Infinispan run:
 
 javac -cp .:build/ycsb.jar:lib/* InfinispanGlue.java
 
-You can have multiple InfinispanGlue classes, each one for each versioning strategy you want to test. 
+You can have multiple InfinispanGlue classes, each one for each versioning strategy you want to test.
+The InfinispanGLue is just an example.
 
 All the dependencies are located in the /lib folder.
 
@@ -48,6 +49,8 @@ To configure workload modify the workload file:
 ./bin/ycsb.sh com.yahoo.ycsb.Client -t **-replay** -db InfinispanGlue -p keys_file=file_workloads/dump.obj -p replay_keys_file=file_workloads/tracesX -P file_workloads/workload_1
 
   speedup: just add the **-speedup** tag to the previous command.
+  
+  Multiple clients: Add **-threads N** do the previous commands. N: number of clients
 
 
 
