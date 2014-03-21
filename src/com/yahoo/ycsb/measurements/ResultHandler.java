@@ -491,9 +491,6 @@ public class ResultHandler {
 					out = new FileOutputStream(event_results_file);
 					stream = new BufferedOutputStream(out);
 
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();
-					continue;
 				} catch (IOException e) {
 					e.printStackTrace();
 					continue;
@@ -546,9 +543,11 @@ public class ResultHandler {
 					out = new FileOutputStream(event_results_file);
 					stream = new BufferedOutputStream(out);
 
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-				} catch (IOException e) {
+				} 
+				//catch (FileNotFoundException e) {
+				//	e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+				//} 
+				catch (IOException e) {
 					e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 				}
 
@@ -621,9 +620,6 @@ public class ResultHandler {
 					out = new FileOutputStream(event_results_file);
 					stream = new BufferedOutputStream(out);
 
-				} catch (FileNotFoundException e) {
-					e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-					continue;
 				} catch (IOException e) {
 					e.printStackTrace();
 					continue;
@@ -1096,7 +1092,7 @@ public class ResultHandler {
 		}
 	}
 
-
+	@SuppressWarnings("unchecked")
 	class resultComparator implements Comparator {
 
 		public int compare(Object o1, Object o2) {

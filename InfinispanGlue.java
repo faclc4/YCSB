@@ -66,6 +66,8 @@ public class InfinispanGlue extends DB{
     */
     public int update(String table, String key, HashMap<Object,Object> values){
 	System.out.println("This is  update");
+	System.out.println("Key is: "+key);
+	System.out.println("versions are: "+values.toString());
 	return OK;
     }
 
@@ -73,6 +75,7 @@ public class InfinispanGlue extends DB{
     public int insert(String table, String key, HashMap<Object,Object> values){
 	System.out.println("This is a insert");
 	System.out.println("key is: "+key);
+	System.out.println("versions are: "+values.toString());
         return OK;
     }
 

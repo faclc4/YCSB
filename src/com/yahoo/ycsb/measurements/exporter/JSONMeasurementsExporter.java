@@ -23,7 +23,6 @@ import java.io.OutputStreamWriter;
 
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.impl.DefaultPrettyPrinter;
 
 /**
  * Export measurements into a machine readable JSON file.
@@ -39,7 +38,6 @@ public class JSONMeasurementsExporter implements MeasurementsExporter
 
     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
     g = factory.createJsonGenerator(bw);
-    g.setPrettyPrinter(new DefaultPrettyPrinter());
   }
 
   public void write(String metric, String measurement, int i) throws IOException

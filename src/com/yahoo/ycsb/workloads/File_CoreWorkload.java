@@ -267,6 +267,8 @@ public class File_CoreWorkload extends Workload {
      * The input file for keys
      */
     public static final String KEYS_FILE_PROPERTY = "keys_file";
+    
+    public static final String REPLAY_FILE_PROPERTY = "replay_keys_file";
 
 
     /**
@@ -334,13 +336,17 @@ public class File_CoreWorkload extends Workload {
 
     public static boolean KEY_INPUT_SOURCE = FILE_INPUT;
 
-    public static ArrayList<BigInteger> files_keys;
+    public static ArrayList<String> files_keys;
     
     public static ArrayList<Long> sorted_files_keys;
     
-    public static Map<BigInteger,List<Long>> kvalues;
+    public static ArrayList<Long> replay_sorted_files_keys;
     
-    public Map<Long,BigInteger> sortedkvales;
+    public static Map<String,List<Long>> kvalues;
+    
+    public Map<Long,String> sortedkvales;
+    
+    public Map<Long,String> replay_sortedkvales;
 
     public static String redis_connection_info;
 
@@ -493,15 +499,20 @@ public class File_CoreWorkload extends Workload {
 
         use_file_columns = Boolean.parseBoolean(p.getProperty(USE_FILE_COLUMNS_PROPERTY, USE_FILE_COLUMNS_DEFAULT_PROPERTY));
 
-        files_keys = new ArrayList<BigInteger>();
+        files_keys = new ArrayList<String>();
         
         sorted_files_keys = new ArrayList<Long>();
         
-        kvalues = new HashMap<BigInteger,List<Long>>();
+        replay_sorted_files_keys = new ArrayList<Long>();
         
-        sortedkvales = new TreeMap<Long,BigInteger>();
+        kvalues = new HashMap<String,List<Long>>();
+        
+        sortedkvales = new TreeMap<Long,String>();
+        
+        replay_sortedkvales = new TreeMap<Long,String>();
 
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
+        String replay_file_path = p.getProperty(REPLAY_FILE_PROPERTY);
         String redis_database_info = p.getProperty(REDIS_DATABASE_PROPERTY);
 
         if (keys_file_path == null && redis_database_info == null) {
@@ -509,12 +520,14 @@ public class File_CoreWorkload extends Workload {
                     "or a redis database with \"redis_database\" ");
         }
 
-        if (keys_file_path != null) {
+        if (keys_file_path != null && replay_file_path != null) {
             /*
             readXML(keys_file_path);
             */
             
             readDump(keys_file_path);
+            
+            readReplayLog(replay_file_path);
             
         }
 
@@ -566,6 +579,7 @@ public class File_CoreWorkload extends Workload {
         
     }
     
+    /*
     public void readXML(String keys_file_path) throws WorkloadException{
         FileInputStream input_file_stream;
             try {
@@ -586,10 +600,15 @@ public class File_CoreWorkload extends Workload {
                     
                     for(int x = 1 ; x< aux.length ; x++){
                         revisions.add(Long.parseLong(aux[x]));
+                        sortedkvales.put(Long.parseLong(aux[x]), kvalueId);
                     }
                     files_keys.add(kvalueId);
                     kvalues.put(kvalueId, revisions);
                 }
+                for(Long v : sortedkvales.keySet()){
+                    sorted_files_keys.add(v);
+                }
+                
             } catch (Exception e) {
                 throw new WorkloadException("Error when opening keys files", e);
             }
@@ -600,13 +619,14 @@ public class File_CoreWorkload extends Workload {
                 throw new WorkloadException("Error when closing file after call retrieval.", e);
             }
     }
+    */
 
     public void readDump(String keys_file_path){
         CompressedDumpParser  handler = new CompressedDumpParser();
             try {
                 kvalues = handler.readData(new FileInputStream(keys_file_path));
                 
-                for(BigInteger key : kvalues.keySet()){
+                for(String key : kvalues.keySet()){
                     files_keys.add(key);
                     for(Long version : kvalues.get(key)){
                         sortedkvales.put(version, key);
@@ -620,6 +640,36 @@ public class File_CoreWorkload extends Workload {
             } catch (Exception ex) {
                 Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
             }
+    }
+    
+    public void readReplayLog(String replay_file_path){
+         FileInputStream input_file_stream = null;
+        try {
+           input_file_stream = new FileInputStream(replay_file_path);
+        } catch (FileNotFoundException ex) {
+            Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+            BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
+            
+            String line = "";
+        try {            
+            while ((line = input_reader.readLine()) != null) {
+                String [] aux = line.split("\\s");
+                String param = aux[1].replace(".","");
+                Long ts = Long.parseLong(param);
+                String url = aux[2].replace("http://en.wikipedia.org/wiki/", "");
+                
+                //replay_sorted_files_keys.add(ts);
+                replay_sortedkvales.put(ts, url);
+            }
+	    for(Long v: replay_sortedkvales.keySet()){
+		replay_sorted_files_keys.add(v);
+	    }
+
+        } catch (IOException ex) {
+            Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 
     @Override
@@ -690,7 +740,7 @@ public class File_CoreWorkload extends Workload {
         HashMap<Object,Object> values = new HashMap<Object,Object>();
         
         //List<Long> versions = kvalues.get(Long.parseLong(keyname));
-        List<Long> versions = kvalues.get(BigInteger.valueOf(Long.parseLong(keyname)));
+        List<Long> versions = kvalues.get(keyname);
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
@@ -704,7 +754,7 @@ public class File_CoreWorkload extends Workload {
         HashMap<Object,Object> values = new HashMap<Object,Object>();
         
         //List<Long> versions = kvalues.get(Long.parseLong(keyname));
-        List<Long> versions = kvalues.get(BigInteger.valueOf(Long.parseLong(keyname)));
+        List<Long> versions = kvalues.get(keyname);
         Random r = new Random();
         int random = r.nextInt(versions.size());
 
@@ -733,6 +783,7 @@ public class File_CoreWorkload extends Workload {
     public boolean doReplayInsert(DB db, Object threadstate, boolean speedup) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
+	System.out.println("keysequence is: "+keynum);
         Long version1 = sorted_files_keys.get(keynum);
         String db_key = String.valueOf(sortedkvales.get(version1));
         
@@ -754,7 +805,7 @@ public class File_CoreWorkload extends Workload {
                     Thread.sleep(diff);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-                }
+               }
                 return true;
             }
             else
@@ -766,6 +817,45 @@ public class File_CoreWorkload extends Workload {
             else
                 return false;
         }
+    }
+    
+    public boolean doTransactionReplay(DB db, Object threadstate, boolean speedup) {
+        //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
+        int keynum = keysequence.nextInt();
+        Long version1 = replay_sorted_files_keys.get(keynum);
+        String db_key = replay_sortedkvales.get(version1);
+        
+         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
+        
+        HashMap<Object,Object> value = new HashMap<Object,Object>();
+        value.put(version1, data);
+        
+        
+        //if there is a next key so that the difference can be calculated...
+        if(keynum+1 < replay_sorted_files_keys.size()){
+            Long version2 = replay_sorted_files_keys.get(keynum+1);
+            Long diff = version2-version1;
+            
+            if(speedup)diff = diff/2;
+            
+            if (db.insert(table, db_key, value) == 0){
+                try {
+                    Thread.sleep(diff);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return true;
+            }
+            else
+                return false;
+        }
+        else{     
+            if (db.read(table, db_key, value) == 0)
+                return true;
+            else
+                return false;
+        }
+    
     }
 
     /**
@@ -829,7 +919,7 @@ public class File_CoreWorkload extends Workload {
         //This function receives the key name and based on the ammount of versions for that key, computes a random index.
         //The index is then used to return the corresponding value from the version list.
         Long version;
-        List<Long> versions = kvalues.get(BigInteger.valueOf(Long.parseLong(keyname)));
+        List<Long> versions = kvalues.get(keyname);
         
         //int random = (int) Math.random() * versions.size();
         Random r = new Random();

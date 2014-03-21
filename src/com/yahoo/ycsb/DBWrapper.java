@@ -93,8 +93,8 @@ public class DBWrapper extends DB
 	long en=System.nanoTime();
         int time = (int)((en-st)/1000);
         time = (time<0) ? Integer.MAX_VALUE : time;
-	_measurements.measure("READRANGE", time);
-	_measurements.reportReturnCode("READRANGE",res);
+	_measurements.measure("READ_RANGE", time);
+	_measurements.reportReturnCode("READ_RANGE",res);
 	return res;
     }
 
