@@ -59,7 +59,7 @@
                 <property name="db.dir" value="db/jdbcCimbo"/>
             <antcall target="dbcompile"/>
         </target>
-	
+
 	<target name="dbcompile-cimboTSO" depends="compile">
           <property name="db.dir" value="db/cimboTSO"/>
           <antcall target="dbcompile"/>
@@ -79,7 +79,7 @@
 	        <fileset dir="${db.dir}/lib" includes="**/*.jar"/>
 	        <fileset file="build/ycsb.jar"/>
 	    </path>
-		
+
     	<mkdir dir="${classes.dir}"/>
         <javac srcdir="${db.dir}/src" destdir="${classes.dir}" classpathref="dbclasspath" deprecation="on">
           <compilerarg value="-Xlint:unchecked"/>
@@ -109,4 +109,3 @@
    </target>
 
 </project>
-
