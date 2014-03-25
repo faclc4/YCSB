@@ -26,6 +26,8 @@ recordcount=15000
 operationcount=15000
 workload=com.yahoo.ycsb.workloads.File_CoreWorkload
 
+speedup=1
+
 readproportion=0.33
 updateproportion=0.33
 insertproportion=0

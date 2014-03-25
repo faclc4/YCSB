@@ -167,7 +167,10 @@ public class File_CoreWorkload extends Workload {
      * The name of the property for the proportion of transactions that are inserts.
      */
     public static final String INSERT_PROPORTION_PROPERTY = "insertproportion";
+    
+    public static final String SPEEDUP_PROPERTY = "speedup";
 
+    public static final String SPEEDUP_PROPERTY_DEFAULT = "1.0";
     /**
      * The default proportion of transactions that are inserts.
      */
@@ -372,6 +375,8 @@ public class File_CoreWorkload extends Workload {
 
     int recordcount;
 
+    Long speedup;
+
     protected static IntegerGenerator getFieldLengthGenerator(Properties p) throws WorkloadException {
         IntegerGenerator fieldlengthgenerator;
         String fieldlengthdistribution = p.getProperty(FIELD_LENGTH_DISTRIBUTION_PROPERTY, FIELD_LENGTH_DISTRIBUTION_PROPERTY_DEFAULT);
@@ -404,7 +409,7 @@ public class File_CoreWorkload extends Workload {
 
         fieldcount = Integer.parseInt(p.getProperty(FIELD_COUNT_PROPERTY, FIELD_COUNT_PROPERTY_DEFAULT));
         fieldlengthgenerator = File_CoreWorkload.getFieldLengthGenerator(p);
-
+        speedup = Long.parseLong(p.getProperty(SPEEDUP_PROPERTY, SPEEDUP_PROPERTY_DEFAULT));
         double readproportion = Double.parseDouble(p.getProperty(READ_PROPORTION_PROPERTY, READ_PROPORTION_PROPERTY_DEFAULT));
         double readrangeproportion = Double.parseDouble(p.getProperty(READRANGE_PROPORTION_PROPERTY, READRANGE_PROPORTION_PROPERTY_DEFAULT));
         double updateproportion = Double.parseDouble(p.getProperty(UPDATE_PROPORTION_PROPERTY, UPDATE_PROPORTION_PROPERTY_DEFAULT));
@@ -780,7 +785,7 @@ public class File_CoreWorkload extends Workload {
             return false;
     }
     
-    public boolean doReplayInsert(DB db, Object threadstate, boolean speedup) {
+    public boolean doReplayInsert(DB db, Object threadstate) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
 	System.out.println("keysequence is: "+keynum);
@@ -798,7 +803,7 @@ public class File_CoreWorkload extends Workload {
             Long version2 = sorted_files_keys.get(keynum+1);
             Long diff = version2-version1;
             
-            if(speedup)diff = diff/2;
+            diff = diff/this.speedup;
             
             if (db.insert(table, db_key, value) == 0){
                 try {
@@ -819,7 +824,7 @@ public class File_CoreWorkload extends Workload {
         }
     }
     
-    public boolean doTransactionReplay(DB db, Object threadstate, boolean speedup) {
+    public boolean doTransactionReplay(DB db, Object threadstate) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
         Long version1 = replay_sorted_files_keys.get(keynum);
@@ -836,7 +841,7 @@ public class File_CoreWorkload extends Workload {
             Long version2 = replay_sorted_files_keys.get(keynum+1);
             Long diff = version2-version1;
             
-            if(speedup)diff = diff/2;
+            diff = diff/this.speedup;
             
             if (db.insert(table, db_key, value) == 0){
                 try {

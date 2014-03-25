@@ -140,7 +140,6 @@ class ClientThread extends Thread
 	DB _db;
 	boolean _dotransactions;
         boolean _replay;
-        boolean _speedup;
 	Workload _workload;
 	int _opcount;
 	double _target;
@@ -164,12 +163,11 @@ class ClientThread extends Thread
 	 * @param opcount the number of operations (transactions or inserts) to do
 	 * @param targetperthreadperms target number of operations per thread per ms
 	 */
-	public ClientThread(DB db, boolean replay, boolean speedup, boolean dotransactions, Workload workload, int threadid, int threadcount, Properties props, int opcount, double targetperthreadperms)
+	public ClientThread(DB db, boolean replay,boolean dotransactions, Workload workload, int threadid, int threadcount, Properties props, int opcount, double targetperthreadperms)
 	{
 		//TODO: consider removing threadcount and threadid
 		_db=db;
 		_dotransactions=dotransactions;
-                _speedup = speedup;
                 _replay = replay;
 		_workload=workload;
 		_opcount=opcount;
@@ -316,7 +314,7 @@ class ClientThread extends Thread
 				while (((_opcount == 0) || (_opsdone < _opcount)) && !_workload.isStopRequested())
 				{
 
-					if (!_workload.doTransactionReplay(_db,_workloadstate,_speedup))
+					if (!_workload.doTransactionReplay(_db,_workloadstate))
 					{
 						break;
 					}
@@ -357,7 +355,7 @@ class ClientThread extends Thread
                                         //esperar diff --> sleep(diff)
                                     
                                     
-					if (!_workload.doReplayInsert(_db,_workloadstate,_speedup))
+					if (!_workload.doReplayInsert(_db,_workloadstate))
 					{
 						break;
 					}
@@ -827,7 +825,7 @@ public class Client
 				System.exit(0);
 			}
 
-			Thread t=new ClientThread(db,replay,speedup,dotransactions,workload,threadid,threadcount,props,opcount/threadcount,targetperthreadperms);
+			Thread t=new ClientThread(db,replay,dotransactions,workload,threadid,threadcount,props,opcount/threadcount,targetperthreadperms);
 
 			threads.add(t);
 			//t.start();

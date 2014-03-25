@@ -83,7 +83,7 @@ public abstract class Workload
        */
       public abstract boolean doInsert(DB db, Object threadstate);
       
-      public abstract boolean doReplayInsert(DB db, Object threadstate, boolean speedup);
+      public abstract boolean doReplayInsert(DB db, Object threadstate);
       
       /**
        * Do one transaction operation. Because it will be called concurrently from multiple client threads, this 
@@ -96,7 +96,7 @@ public abstract class Workload
        */
       public abstract boolean doTransaction(DB db, Object threadstate);
       
-       public abstract boolean doTransactionReplay(DB db, Object threadstate, boolean speedup);
+       public abstract boolean doTransactionReplay(DB db, Object threadstate);
       
       /**
        * Allows scheduling a request to stop the workload.
