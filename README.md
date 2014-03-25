@@ -42,7 +42,7 @@ To configure workload modify the workload file:
 **To LOAD data run:**
 
 ```bash
-  ./bin/ycsb.sh com.yahoo.ycsb.Client -t -db InfinispanGlue -p keys_file=dump.obj -p replay_keys_file=tracesX -P file_workloads/workload_1
+  ./bin/ycsb.sh com.yahoo.ycsb.Client -load -db InfinispanGlue -p keys_file=dump.obj -p replay_keys_file=tracesX -P file_workloads/workload_1
 ```  
   
   This command will load data according to the Wikipedia dump, as fast as possible.
