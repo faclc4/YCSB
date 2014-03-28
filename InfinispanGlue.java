@@ -89,8 +89,8 @@ public class InfinispanGlue extends DB {
 		Version vA = vsg.generateFrom(versionA);
 		Version vB = vsg.generateFrom(versionB);
 		try{
-		cache.get(key, vA, vB)
-		catch (RemoteException re) {
+			cache.get(key, vA, vB);
+		} catch (RemoteException re) {
 			re.printStackTrace();
 			return ERROR;
 		}
