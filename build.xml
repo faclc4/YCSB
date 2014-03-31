@@ -20,6 +20,7 @@
         <mkdir dir="${classes.dir}"/>
         <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="build.classpath" deprecation="on" includeantruntime="false">
           <compilerarg value="-Xlint:unchecked"/>
+	  <compilerarg line="-encoding utf-8"/>
         </javac>
         <antcall target="makejar"/>
 	</target>

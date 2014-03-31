@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.Vector;
 
-import org.infinispan.Version;
+import org.infinispan.versioning.utils.version.Version;
 import org.infinispan.versioning.rmi.RemoteVersionedCache;
 import org.infinispan.versioning.rmi.RemoteVersionedCacheImpl;
 import org.infinispan.versioning.utils.IncrediblePropertyLoader;
@@ -45,12 +45,17 @@ public class InfinispanGlue extends DB {
 		String versioningTechnique = sysProps.getProperty(
 				"versioningTechnique", "ATOMICMAP");
 
-		String serviceURL = "//" + server + "/"
-				+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"
-				+ versioningTechnique;
-		System.out.println("Connecting to " + serviceURL + " ...");
+		try{
+		  String serviceURL = "//" + servers + "/"
+		    + RemoteVersionedCacheImpl.SERVICE_NAME + "-"
+		    + versioningTechnique;
+		  System.out.println("Connecting to " + serviceURL + " ...");
 		this.cache = (RemoteVersionedCache<String, String>) Naming
 				.lookup(serviceURL);
+
+		}catch(Exception e){
+		  throw new RuntimeException(e.getMessage());
+		}
 
 	}
 
