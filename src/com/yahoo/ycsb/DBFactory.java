@@ -34,8 +34,6 @@ public class DBFactory
 	 try 
 	 {
 	    Class dbclass = classLoader.loadClass(dbname);
-	    //System.out.println("dbclass.getName() = " + dbclass.getName());
-	    
 	    ret=(DB)dbclass.newInstance();
 	 }
 	 catch (Exception e) 

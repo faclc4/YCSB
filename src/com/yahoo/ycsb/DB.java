@@ -17,10 +17,10 @@
 
 package com.yahoo.ycsb;
 
+import org.infinispan.versioning.utils.version.Version;
+
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
 
 /**
  * A layer for accessing a database to be benchmarked. Each thread in the client
@@ -81,16 +81,16 @@ public abstract class DB
 	{
 	}
 
-	public abstract int read(String table, String key, Object version);
+	public abstract int read(String table, String key, Version version);
 
 
-	public abstract int readRange(String table, String key, Object versionA, Object versionB);
+	public abstract int readRange(String table, String key, Version versionA, Version versionB);
 	
 
-	public abstract int update(String table, String key, HashMap<Object,Object> values);
+	public abstract int update(String table, String key, HashMap<Version,Object> map);
 
 
-	public abstract int insert(String table, String key, HashMap<Object,Object> values);
+	public abstract int insert(String table, String key, HashMap<Version,Object> map);
 
 
 	public abstract int delete(String table, String key);
