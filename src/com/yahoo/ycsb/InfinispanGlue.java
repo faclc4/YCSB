@@ -27,14 +27,21 @@ public class InfinispanGlue extends DB {
    * This function is used to intiate the connection to USPN.and executed once per client thread.
    */
   public void init() throws DBException {
-    String servers = System.getProperty("servers","localhost:12345");
-    String versioningTechnique = System.getProperty("versioningTechnique", "ATOMICMAP");
-    try{
-      String serviceURL = "//" + servers + "/"
-	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"
-	+ versioningTechnique;
-      if (debug) System.out.println("Connecting to " + serviceURL + " ...");
+    String servers = super._p.getProperty("servers", "localhost:12345");
+    String versioningTechnique = super._p.getProperty("versioningTechnique", "ATOMICMAP");
+
+    System.out.println("Verisoning technique = "+versioningTechnique);
+    System.out.println("RMI Servers = "+servers);
+
+    try{ 
+      String serviceURL = "//" + servers + "/"	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"	+ versioningTechnique;
+      System.out.print("Connecting to " + serviceURL + " ... ");
       this.cache = (RemoteVersionedCache<String, String>) Naming.lookup(serviceURL);
+      System.out.println("[\u001b[1;44m OK \u001b[m]");
+
+      System.out.print("Clearling cache ... ");
+      this.cache.clear();
+      System.out.println("[\u001b[1;44m OK \u001b[m]");
 
     }catch(Exception e){
       throw new RuntimeException(e.getMessage());
