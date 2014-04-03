@@ -19,7 +19,6 @@ package com.yahoo.ycsb.workloads;
 
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.*;
-import com.yahoo.ycsb.workloads.*;
 import com.yahoo.ycsb.measurements.ResultHandler;
 import com.yahoo.ycsb.measurements.ResultStorage;
 import org.infinispan.versioning.utils.version.Version;
@@ -838,7 +837,8 @@ public class File_CoreWorkload extends Workload {
                 value.put(new VersionScalar(db_item.getValue()),data);
             else
                 value.put(new VersionScalar(version1), data);
-        }        
+        }
+
         //if there is a next key so that the difference can be calculated...
         if(keynum+1 < replay_sorted_files_keys.size()){
             Long version2 = replay_sorted_files_keys.get(keynum+1);
@@ -858,7 +858,7 @@ public class File_CoreWorkload extends Workload {
                 return false;
         }
         else{     
-            if (db.read(table, db_key, value) == 0)
+            if (db.read(table, db_key, new VersionScalar(version1)) == 0)
                 return true;
             else
                 return false;
