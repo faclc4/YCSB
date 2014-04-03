@@ -23,7 +23,7 @@
 #   Request distribution: zipfian
 
 recordcount=15000
-operationcount=15000
+operationcount=150000
 workload=com.yahoo.ycsb.workloads.File_CoreWorkload
 
 speedup=1

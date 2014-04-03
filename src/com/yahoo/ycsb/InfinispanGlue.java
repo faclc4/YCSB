@@ -120,7 +120,7 @@ public class InfinispanGlue extends DB {
     if (debug) System.out.println("versions:values map equals: " + map.toString());
     try {
         for(Version version : map.keySet()){
-            this.cache.put(key, "");
+            this.cache.put(key, map.get(version).toString(),version);
         }
     } catch (RemoteException e) {
         e.printStackTrace();  // TODO: Customise this generated block
