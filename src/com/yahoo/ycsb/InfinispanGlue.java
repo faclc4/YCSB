@@ -22,7 +22,7 @@ public class InfinispanGlue extends DB {
 
   private RemoteVersionedCache<String, String> cache;
   private VersionScalarGenerator vsg = new VersionScalarGenerator();
-  
+
   /**
    * This function is used to intiate the connection to USPN.and executed once per client thread.
    */
@@ -30,7 +30,7 @@ public class InfinispanGlue extends DB {
     String servers = super._p.getProperty("servers", "localhost:12345");
     String versioningTechnique = super._p.getProperty("versioningTechnique", "ATOMICMAP");
 
-    System.out.println("Verisoning technique = "+versioningTechnique);
+    System.out.println("Versioning technique = "+versioningTechnique);
     System.out.println("RMI Servers = "+servers);
 
     try{ 
@@ -41,7 +41,7 @@ public class InfinispanGlue extends DB {
 
 
       if(super._p.getProperty("clear","false").equals("true")){
-          System.out.print("Clearling cache ... ");
+          System.out.print("Clearing cache ... ");
           this.cache.clear();
           System.out.println("[\u001b[1;44m OK \u001b[m]");
       }
@@ -120,7 +120,7 @@ public class InfinispanGlue extends DB {
     if (debug) System.out.println("versions:values map equals: " + map.toString());
     try {
         for(Version version : map.keySet()){
-            this.cache.put(key, map.get(version).toString(),version);
+            this.cache.put(key, "");
         }
     } catch (RemoteException e) {
         e.printStackTrace();  // TODO: Customise this generated block
