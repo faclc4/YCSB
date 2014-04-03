@@ -537,7 +537,7 @@ public class File_CoreWorkload extends Workload {
             
             readDump(keys_file_path);
             
-            readOldIdLog(oldIds_file_path);
+            // readOldIdLog(oldIds_file_path);
             
             readReplayLog(replay_file_path);
         }
