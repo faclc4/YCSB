@@ -19,19 +19,16 @@ package com.yahoo.ycsb.workloads;
 
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.*;
-import com.yahoo.ycsb.measurements.Measurements;
+import com.yahoo.ycsb.workloads.*;
 import com.yahoo.ycsb.measurements.ResultHandler;
 import com.yahoo.ycsb.measurements.ResultStorage;
 import redis.clients.jedis.Jedis;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.xml.sax.SAXException;
 
 /**
  * The core benchmark scenario. Represents a set of clients doing simple CRUD operations. The relative
@@ -167,10 +164,7 @@ public class File_CoreWorkload extends Workload {
      * The name of the property for the proportion of transactions that are inserts.
      */
     public static final String INSERT_PROPORTION_PROPERTY = "insertproportion";
-    
-    public static final String SPEEDUP_PROPERTY = "speedup";
 
-    public static final String SPEEDUP_PROPERTY_DEFAULT = "1.0";
     /**
      * The default proportion of transactions that are inserts.
      */
@@ -186,6 +180,9 @@ public class File_CoreWorkload extends Workload {
      */
     public static final String READRANGE_PROPORTION_PROPERTY = "readrangeproportion";
     
+    public static final String SPEEDUP_PROPERTY = "speedup";
+    
+    public static final String SPEEDUP_PROPERTY_DEFAULT = "1.0";
     /**
      * The default proportion of transactions that are scans.
      */
@@ -273,6 +270,7 @@ public class File_CoreWorkload extends Workload {
     
     public static final String REPLAY_FILE_PROPERTY = "replay_keys_file";
 
+    public static final String OLDID_FILE_PROPERTY = "oldid_file";
 
     /**
      * The redis database address for key querying
@@ -347,9 +345,11 @@ public class File_CoreWorkload extends Workload {
     
     public static Map<String,List<Long>> kvalues;
     
+    public static Map<String,Long> oldids;
+    
     public Map<Long,String> sortedkvales;
     
-    public Map<Long,String> replay_sortedkvales;
+    public Map<Long,Map<String,Long>> replay_sortedkvales;
 
     public static String redis_connection_info;
 
@@ -374,7 +374,7 @@ public class File_CoreWorkload extends Workload {
     boolean orderedinserts;
 
     int recordcount;
-
+    
     Long speedup;
 
     protected static IntegerGenerator getFieldLengthGenerator(Properties p) throws WorkloadException {
@@ -409,8 +409,9 @@ public class File_CoreWorkload extends Workload {
 
         fieldcount = Integer.parseInt(p.getProperty(FIELD_COUNT_PROPERTY, FIELD_COUNT_PROPERTY_DEFAULT));
         fieldlengthgenerator = File_CoreWorkload.getFieldLengthGenerator(p);
-        speedup = Long.parseLong(p.getProperty(SPEEDUP_PROPERTY, SPEEDUP_PROPERTY_DEFAULT));
+
         double readproportion = Double.parseDouble(p.getProperty(READ_PROPORTION_PROPERTY, READ_PROPORTION_PROPERTY_DEFAULT));
+        speedup = Long.parseLong(p.getProperty(SPEEDUP_PROPERTY, SPEEDUP_PROPERTY_DEFAULT));
         double readrangeproportion = Double.parseDouble(p.getProperty(READRANGE_PROPORTION_PROPERTY, READRANGE_PROPORTION_PROPERTY_DEFAULT));
         double updateproportion = Double.parseDouble(p.getProperty(UPDATE_PROPORTION_PROPERTY, UPDATE_PROPORTION_PROPERTY_DEFAULT));
         double insertproportion = Double.parseDouble(p.getProperty(INSERT_PROPORTION_PROPERTY, INSERT_PROPORTION_PROPERTY_DEFAULT));
@@ -512,13 +513,16 @@ public class File_CoreWorkload extends Workload {
         
         kvalues = new HashMap<String,List<Long>>();
         
+        oldids = new HashMap<String,Long>();
+        
         sortedkvales = new TreeMap<Long,String>();
         
-        replay_sortedkvales = new TreeMap<Long,String>();
+        replay_sortedkvales = new TreeMap<Long,Map<String,Long>>();
 
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
         String replay_file_path = p.getProperty(REPLAY_FILE_PROPERTY);
         String redis_database_info = p.getProperty(REDIS_DATABASE_PROPERTY);
+        String oldIds_file_path = p.getProperty(OLDID_FILE_PROPERTY);
 
         if (keys_file_path == null && redis_database_info == null) {
             throw new WorkloadException("No input source for keys define a file with \"keys_file\" " +
@@ -532,8 +536,9 @@ public class File_CoreWorkload extends Workload {
             
             readDump(keys_file_path);
             
-            readReplayLog(replay_file_path);
+            readOldIdLog(oldIds_file_path);
             
+            readReplayLog(replay_file_path);
         }
 
         if (redis_database_info != null) {
@@ -583,48 +588,6 @@ public class File_CoreWorkload extends Workload {
         last_scan = System.currentTimeMillis();
         
     }
-    
-    /*
-    public void readXML(String keys_file_path) throws WorkloadException{
-        FileInputStream input_file_stream;
-            try {
-                input_file_stream = new FileInputStream(keys_file_path);
-            } catch (FileNotFoundException e) {
-                throw new WorkloadException("Error when opening file for key retrieval: " + keys_file_path, e);
-            }
-
-            BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
-            try {
-                String line = null;
-
-                while ((line = input_reader.readLine()) != null) {
-                    String [] aux = line.split(" ");
-                    //Long kvalueId = Long.parseLong(aux[0]);
-                    BigInteger kvalueId = BigInteger.valueOf(Long.parseLong(aux[0]));
-                    List <Long> revisions = new ArrayList<Long>();
-                    
-                    for(int x = 1 ; x< aux.length ; x++){
-                        revisions.add(Long.parseLong(aux[x]));
-                        sortedkvales.put(Long.parseLong(aux[x]), kvalueId);
-                    }
-                    files_keys.add(kvalueId);
-                    kvalues.put(kvalueId, revisions);
-                }
-                for(Long v : sortedkvales.keySet()){
-                    sorted_files_keys.add(v);
-                }
-                
-            } catch (Exception e) {
-                throw new WorkloadException("Error when opening keys files", e);
-            }
-
-            try {
-                input_file_stream.close();
-            } catch (IOException e) {
-                throw new WorkloadException("Error when closing file after call retrieval.", e);
-            }
-    }
-    */
 
     public void readDump(String keys_file_path){
         CompressedDumpParser  handler = new CompressedDumpParser();
@@ -648,7 +611,7 @@ public class File_CoreWorkload extends Workload {
     }
     
     public void readReplayLog(String replay_file_path){
-         FileInputStream input_file_stream = null;
+        FileInputStream input_file_stream = null;
         try {
            input_file_stream = new FileInputStream(replay_file_path);
         } catch (FileNotFoundException ex) {
@@ -663,18 +626,52 @@ public class File_CoreWorkload extends Workload {
                 String [] aux = line.split("\\s");
                 String param = aux[1].replace(".","");
                 Long ts = Long.parseLong(param);
-                String url = aux[2].replace("http://en.wikipedia.org/wiki/", "");
                 
-                //replay_sorted_files_keys.add(ts);
-                replay_sortedkvales.put(ts, url);
+                if(aux[2].startsWith("http://en.wikipedia.org/wiki/")){
+                    String url = aux[2].replace("http://en.wikipedia.org/wiki/", "");
+                    Map vals = new HashMap();
+                    vals.put(url, null);
+                    replay_sortedkvales.put(ts, vals);
+                }
+                if(aux[2].startsWith("http://en.wikipedia.org/w/") && aux[2].contains("oldid=")){
+                    String url = aux[2].replace("http://en.wikipedia.org/w/index.php?", "");
+                    String stringsplit[] = url.split("\\&");
+                    
+                    String url_final="";
+                    Long revId = null;
+                    
+                    for(String item : stringsplit){
+                        if(item.startsWith("title=")){
+                            if(item.replace("title=", "")!= null)
+                                url_final = item.replace("title=","");
+                        }
+                        if(item.startsWith("oldid=")){
+                            if(item.replace("oldid=", "")!= null)
+                                revId = Long.parseLong(item.replace("oldid=", ""));
+                        }
+                    }
+                    if(url_final != null && revId != null){
+                        Map vals = new HashMap();
+                        vals.put(url_final, oldids.get(revId));
+                        replay_sortedkvales.put(ts, vals);
+                    }       
+                }
             }
-	    for(Long v: replay_sortedkvales.keySet()){
-		replay_sorted_files_keys.add(v);
-	    }
-
+            for(Long v : replay_sortedkvales.keySet()){
+                replay_sorted_files_keys.add(v);
+            }
         } catch (IOException ex) {
             Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public void readOldIdLog(String oldId_file_path){
+        CompressedDumpParser  handler = new CompressedDumpParser();
+            try {
+               oldids = handler.readOldID(new FileInputStream(oldId_file_path)); 
+            } catch (Exception ex) {
+                Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+            }
     }
 
     @Override
@@ -788,7 +785,6 @@ public class File_CoreWorkload extends Workload {
     public boolean doReplayInsert(DB db, Object threadstate) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
-	System.out.println("keysequence is: "+keynum);
         Long version1 = sorted_files_keys.get(keynum);
         String db_key = String.valueOf(sortedkvales.get(version1));
         
@@ -810,7 +806,7 @@ public class File_CoreWorkload extends Workload {
                     Thread.sleep(diff);
                 } catch (InterruptedException ex) {
                     Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-               }
+                }
                 return true;
             }
             else
@@ -828,14 +824,18 @@ public class File_CoreWorkload extends Workload {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
         Long version1 = replay_sorted_files_keys.get(keynum);
-        String db_key = replay_sortedkvales.get(version1);
+        String db_key = "";
         
-         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-        
+        ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt()); 
         HashMap<Object,Object> value = new HashMap<Object,Object>();
-        value.put(version1, data);
         
-        
+        for(Map.Entry<String,Long> db_item : replay_sortedkvales.get(version1).entrySet()){
+            db_key = db_item.getKey();
+            if(db_item.getValue()!= null)
+                value.put(db_item.getValue(),data);
+            else
+                value.put(version1, data);
+        }        
         //if there is a next key so that the difference can be calculated...
         if(keynum+1 < replay_sorted_files_keys.size()){
             Long version2 = replay_sorted_files_keys.get(keynum+1);
@@ -860,7 +860,6 @@ public class File_CoreWorkload extends Workload {
             else
                 return false;
         }
-    
     }
 
     /**
@@ -958,44 +957,6 @@ public class File_CoreWorkload extends Workload {
     }
 
     public void doTransactionReadModifyWrite(DB db) {
-        /*
-        //choose a random key
-        int keynum = nextKeynum();
-
-        String keyname = buildKeyName(keynum);
-
-        Long version = nextVersion(keyname);
-
-        if (!readallfields) {
-            //read a random field
-            String fieldname = "field" + fieldchooser.nextString();
-
-           // fields = new HashSet<String>();
-           // fields.add(fieldname);
-        }
-
-        HashMap<Object, Object> values;
-
-        if (writeallfields) {
-            //new data for all the fields
-            values = buildValues();
-        } else {
-            //update a random field
-            values = buildUpdate();
-        }
-
-        //do the transaction
-
-        long st = System.currentTimeMillis();
-
-        db.read(table, keyname, version);
-
-        db.update(table, keyname, values);
-
-        long en = System.currentTimeMillis();
-
-        Measurements.getMeasurements().measure("READ-MODIFY-WRITE", (int) (en - st));
-        */
     }
 
     public void doTransactionUpdate(DB db) {
@@ -1059,3 +1020,7 @@ class ClientThreadState{
         return scan_thread;
     }
 }
+
+
+
+
