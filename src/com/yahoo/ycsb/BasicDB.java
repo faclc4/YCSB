@@ -17,11 +17,11 @@
 
 package com.yahoo.ycsb;
 
+import org.infinispan.versioning.utils.version.Version;
+
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.Set;
-import java.util.Enumeration;
-import java.util.Vector;
 
 
 /**
@@ -106,7 +106,7 @@ public class BasicDB extends DB
 	}
 
     @Override
-    public int read(String table, String key, Object version) {
+    public int read(String table, String key, Version version) {
         delay();
 
 		if (verbose)
@@ -124,7 +124,7 @@ public class BasicDB extends DB
     }
 
     @Override
-    public int readRange(String table, String key, Object versionA, Object versionB) {
+    public int readRange(String table, String key, Version versionA, Version versionB) {
         delay();
 
 		if (verbose)
@@ -142,7 +142,7 @@ public class BasicDB extends DB
     }
 
     @Override
-    public int update(String table, String key, HashMap<Object, Object> values) {
+    public int update(String table, String key, HashMap<Version, Object> values) {
         delay();
 
 		if (verbose)
@@ -162,7 +162,7 @@ public class BasicDB extends DB
     }
 
     @Override
-    public int insert(String table, String key, HashMap<Object, Object> values) {
+    public int insert(String table, String key, HashMap<Version, Object> values) {
         delay();
 
 		if (verbose)

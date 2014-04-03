@@ -97,6 +97,10 @@ for f in $YCSB_HOME/build/*.jar; do
   CLASSPATH=${CLASSPATH}:$f
 done
 
+for f in $YCSB_HOME/target/*.jar; do
+  CLASSPATH=${CLASSPATH}:$f
+done
+
 for f in $YCSB_HOME/lib/*.jar; do
   CLASSPATH=${CLASSPATH}:$f
 done

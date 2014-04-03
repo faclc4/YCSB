@@ -145,6 +145,7 @@ class ClientThread extends Thread
 	DB _db;
 	boolean _dotransactions;
         boolean _replay;
+        boolean _speedup;
 	Workload _workload;
 	int _opcount;
 	double _target;
@@ -168,7 +169,7 @@ class ClientThread extends Thread
 	 * @param opcount the number of operations (transactions or inserts) to do
 	 * @param targetperthreadperms target number of operations per thread per ms
 	 */
-	public ClientThread(DB db, boolean replay,boolean dotransactions, Workload workload, int threadid, int threadcount, Properties props, int opcount, double targetperthreadperms)
+	public ClientThread(DB db, boolean replay, boolean dotransactions, Workload workload, int threadid, int threadcount, Properties props, int opcount, double targetperthreadperms)
 	{
 		//TODO: consider removing threadcount and threadid
 		_db=db;
@@ -536,7 +537,6 @@ public class Client
 		Properties fileprops=new Properties();
 		boolean dotransactions=true;
                 boolean replay=false;
-                boolean speedup = false;
 		int threadcount=1;
 		int target=0;
 		boolean status=false;
@@ -595,11 +595,6 @@ public class Client
                         else if (args[argindex].compareTo("-replay")==0)
 			{
 				replay=true;
-				argindex++;
-			}
-                        else if (args[argindex].compareTo("-speedup")==0)
-			{
-				speedup = true;
 				argindex++;
 			}
 			else if (args[argindex].compareTo("-db")==0)

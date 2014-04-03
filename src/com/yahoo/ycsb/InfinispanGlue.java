@@ -39,9 +39,12 @@ public class InfinispanGlue extends DB {
       this.cache = (RemoteVersionedCache<String, String>) Naming.lookup(serviceURL);
       System.out.println("[\u001b[1;44m OK \u001b[m]");
 
-      System.out.print("Clearling cache ... ");
-      this.cache.clear();
-      System.out.println("[\u001b[1;44m OK \u001b[m]");
+
+      if(super._p.getProperty("clear","false").equals("true")){
+          System.out.print("Clearling cache ... ");
+          this.cache.clear();
+          System.out.println("[\u001b[1;44m OK \u001b[m]");
+      }
 
     }catch(Exception e){
       throw new RuntimeException(e.getMessage());
@@ -117,7 +120,7 @@ public class InfinispanGlue extends DB {
     if (debug) System.out.println("versions:values map equals: " + map.toString());
     try {
         for(Version version : map.keySet()){
-            this.cache.put(key, map.get(version).toString());
+            this.cache.put(key, map.get(version).toString(),version);
         }
     } catch (RemoteException e) {
         e.printStackTrace();  // TODO: Customise this generated block

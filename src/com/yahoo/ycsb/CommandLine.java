@@ -17,19 +17,17 @@
 
 package com.yahoo.ycsb;
 
-import java.util.Properties;
+import com.yahoo.ycsb.workloads.File_CoreWorkload;
+import org.infinispan.versioning.utils.version.Version;
+import org.infinispan.versioning.utils.version.VersionScalar;
+
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Enumeration;
-import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.Vector;
-
-import com.yahoo.ycsb.workloads.*;
+import java.util.Properties;
 
 /**
  * A simple command line client to a database, using the appropriate com.yahoo.ycsb.DB implementation.
@@ -281,12 +279,12 @@ public class CommandLine
 	       }
 	       else 
 	       {
-		  HashMap<Object,Object> values=new HashMap<Object,Object>();
+		  HashMap<Version,Object> values=new HashMap<Version,Object>();
 
 		  for (int i=2; i<tokens.length; i++)
 		  {
 		     String[] nv=tokens[i].split("=");
-		     values.put(nv[0],new StringByteIterator(nv[1]));
+		     values.put(new VersionScalar(Integer.valueOf(nv[0])),new StringByteIterator(nv[1]));
 		  }
 
 		  int ret=db.update(table,tokens[1],values);
@@ -301,12 +299,13 @@ public class CommandLine
 	       }
 	       else 
 	       {
-		  HashMap<Object,Object> values=new HashMap<Object,Object>();
+
+		  HashMap<Version,Object> values=new HashMap<Version, Object>();
 
 		  for (int i=2; i<tokens.length; i++)
 		  {
 		     String[] nv=tokens[i].split("=");
-		     values.put(nv[0],new StringByteIterator(nv[1]));
+		     values.put(new VersionScalar(Integer.valueOf(nv[0])),new StringByteIterator(nv[1]));
 		  }
 
 		  int ret=db.insert(table,tokens[1],values);
