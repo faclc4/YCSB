@@ -96,7 +96,7 @@ public abstract class Workload
        */
       public abstract boolean doTransaction(DB db, Object threadstate);
       
-       public abstract boolean doTransactionReplay(DB db, Object threadstate);
+       public abstract boolean doTransactionReplay(DB db, Object threadstat);
       
       /**
        * Allows scheduling a request to stop the workload.
