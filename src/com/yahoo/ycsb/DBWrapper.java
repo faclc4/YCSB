@@ -17,12 +17,11 @@
 
 package com.yahoo.ycsb;
 
+import com.yahoo.ycsb.measurements.Measurements;
+import org.infinispan.versioning.utils.version.Version;
+
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
-
-import com.yahoo.ycsb.measurements.Measurements;
 
 /**
  * Wrapper around a "real" DB that measures latencies and counts return codes.
@@ -75,7 +74,7 @@ public class DBWrapper extends DB
 
 
     @Override
-    public int read(String table, String key, Object version) {
+    public int read(String table, String key, Version version) {
         long st=System.nanoTime();
 		int res=_db.read(table,key,version);
 		long en=System.nanoTime();
@@ -87,7 +86,7 @@ public class DBWrapper extends DB
     }
 
     @Override
-    public int readRange(String table, String key, Object versionA, Object versionB) {
+    public int readRange(String table, String key, Version versionA, Version versionB) {
               long st=System.nanoTime();
 	int res=_db.readRange(table,key,versionA,versionB);
 	long en=System.nanoTime();
@@ -99,7 +98,7 @@ public class DBWrapper extends DB
     }
 
     @Override
-    public int update(String table, String key, HashMap<Object, Object> values) {
+    public int update(String table, String key, HashMap<Version, Object> values) {
         long st=System.nanoTime();
 	int res=_db.update(table,key,values);
 	long en=System.nanoTime();
@@ -109,7 +108,7 @@ public class DBWrapper extends DB
     }
 
     @Override
-    public int insert(String table, String key, HashMap<Object, Object> values) {
+    public int insert(String table, String key, HashMap<Version, Object> values) {
         long st=System.nanoTime();
 	int res=_db.insert(table,key,values);
 	long en=System.nanoTime();

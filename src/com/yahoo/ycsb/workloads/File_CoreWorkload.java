@@ -19,19 +19,17 @@ package com.yahoo.ycsb.workloads;
 
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.*;
-import com.yahoo.ycsb.measurements.Measurements;
 import com.yahoo.ycsb.measurements.ResultHandler;
 import com.yahoo.ycsb.measurements.ResultStorage;
+import org.infinispan.versioning.utils.version.Version;
+import org.infinispan.versioning.utils.version.VersionScalar;
 import redis.clients.jedis.Jedis;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import org.xml.sax.SAXException;
 
 /**
  * The core benchmark scenario. Represents a set of clients doing simple CRUD operations. The relative
@@ -138,7 +136,7 @@ public class File_CoreWorkload extends Workload {
     /**
      * The default value for the writeallfields property.
      */
-    public static final String WRITE_ALL_FIELDS_PROPERTY_DEFAULT = "false";
+    public static final String WRITE_ALL_FIELDS_PROPERTY_DEFAULT = "true";
 
     boolean writeallfields;
 
@@ -645,6 +643,7 @@ public class File_CoreWorkload extends Workload {
             } catch (Exception ex) {
                 Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
             }
+        System.out.println("Number of keys = " + sortedkvales.size());
     }
     
     public void readReplayLog(String replay_file_path){
@@ -733,7 +732,7 @@ public class File_CoreWorkload extends Workload {
             }
 
         }else{
-            key = String.valueOf(files_keys.get((int) keynum));            
+            key = String.valueOf(files_keys.get( ((int) keynum)%files_keys.size() )); // FIXME
         }
 
         return key;
@@ -741,22 +740,22 @@ public class File_CoreWorkload extends Workload {
     }
     
     
-    public HashMap<Object,Object> buildValues(String keyname) {
-        HashMap<Object,Object> values = new HashMap<Object,Object>();
-        
+    public HashMap<Version,Object> buildValues(String keyname) {
+        HashMap<Version,Object> values = new HashMap<Version,Object>();
+
         //List<Long> versions = kvalues.get(Long.parseLong(keyname));
         List<Long> versions = kvalues.get(keyname);
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-            values.put(version, data);
+            values.put(new VersionScalar(version), data);
         }
         return values;
     }
 
-    public HashMap<Object,Object> buildUpdate(String keyname) {
+    public HashMap<Version,Object> buildUpdate(String keyname) {
         //update a random field
-        HashMap<Object,Object> values = new HashMap<Object,Object>();
+        HashMap<Version,Object> values = new HashMap<Version,Object>();
         
         //List<Long> versions = kvalues.get(Long.parseLong(keyname));
         List<Long> versions = kvalues.get(keyname);
@@ -764,7 +763,7 @@ public class File_CoreWorkload extends Workload {
         int random = r.nextInt(versions.size());
 
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-        values.put(versions.get(random), data);
+        values.put(new VersionScalar(versions.get(random)), data);
         return values;
     }
 
@@ -778,7 +777,7 @@ public class File_CoreWorkload extends Workload {
         int keynum = keysequence.nextInt();
         String dbkey = fetchKeyName(keynum, threadstate);
 
-        HashMap<Object,Object> values = buildValues(dbkey);
+        HashMap<Version,Object> values = buildValues(dbkey);
         if (db.insert(table, dbkey, values) == 0)
             return true;
         else
@@ -794,8 +793,8 @@ public class File_CoreWorkload extends Workload {
         
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
         
-        HashMap<Object,Object> value = new HashMap<Object,Object>();
-        value.put(version1, data);
+        HashMap<Version,Object> value = new HashMap<Version,Object>();
+        value.put(new VersionScalar(version1), data);
         
         
         //if there is a next key so that the difference can be calculated...
@@ -830,10 +829,10 @@ public class File_CoreWorkload extends Workload {
         Long version1 = replay_sorted_files_keys.get(keynum);
         String db_key = replay_sortedkvales.get(version1);
         
-         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
+        ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
         
-        HashMap<Object,Object> value = new HashMap<Object,Object>();
-        value.put(version1, data);
+        HashMap<Version,Object> value = new HashMap<Version,Object>();
+        value.put(new VersionScalar(version1), data);
         
         
         //if there is a next key so that the difference can be calculated...
@@ -855,7 +854,7 @@ public class File_CoreWorkload extends Workload {
                 return false;
         }
         else{     
-            if (db.read(table, db_key, value) == 0)
+            if (db.read(table, db_key, new VersionScalar(version1)) == 0)    // FIXME correct ?
                 return true;
             else
                 return false;
@@ -941,20 +940,16 @@ public class File_CoreWorkload extends Workload {
 
         Long version = nextVersion(keyname);
 
-        db.read(table, keyname, version);
+        db.read(table, keyname, new VersionScalar(version));
     }
     
     public void doTransactionReadRange(DB db,Object thread_state) {
         //choose a random key
         int keynum = nextKeynum();
-
         String keyname = fetchKeyName(keynum,thread_state);
-
         Long versionA = nextVersion(keyname);
-        
         Long versionB = nextVersion(keyname);
-
-        db.readRange(table, keyname, versionA,versionB);
+        db.readRange(table, keyname, new VersionScalar(versionA), new VersionScalar(versionB));
     }
 
     public void doTransactionReadModifyWrite(DB db) {
@@ -1005,7 +1000,7 @@ public class File_CoreWorkload extends Workload {
         //String keyname = buildKeyName(keynum);
         String keyname = fetchKeyName(keynum,null);
 
-        HashMap<Object,Object> values;
+        HashMap<Version,Object> values;
 
         if (writeallfields) {
             //new data for all the fields
@@ -1024,7 +1019,7 @@ public class File_CoreWorkload extends Workload {
 
         String dbkey = buildKeyName(keynum);
 
-        HashMap<Object,Object> values = buildValues(dbkey);
+        HashMap<Version,Object> values = buildValues(dbkey);
         db.insert(table, dbkey, values);
     }
     

@@ -28,10 +28,12 @@ workload=com.yahoo.ycsb.workloads.File_CoreWorkload
 
 speedup=1
 
-readproportion=0.33
-updateproportion=0.33
+readproportion=0
+updateproportion=0
 insertproportion=0
-readrangeproportion=0.33
+readrangeproportion=1
 
 requestdistribution=uniform
 
+servers=localhost:12345
+versioningTechnique=TREEMAP
