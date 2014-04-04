@@ -166,8 +166,11 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
                     int day = time.get(Calendar.DAY_OF_MONTH);
                     int month = time.get(Calendar.MONTH);
                     int year = time.get(Calendar.YEAR);
+                    int hour = time.get(Calendar.HOUR_OF_DAY);
+                    int minute = time.get(Calendar.MINUTE);
+                    int second = time.get(Calendar.SECOND);
                     
-                    String key = ""+year+"-"+month+"-"+day;
+                    String key = ""+year+"/"+month+"/"+day+"-"+hour+":"+minute+":"+second;
                                 
                     if(!stats.containsKey(key)){
                        stats.put(key, 1);

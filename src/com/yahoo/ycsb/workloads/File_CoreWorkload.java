@@ -19,10 +19,9 @@ package com.yahoo.ycsb.workloads;
 
 import com.yahoo.ycsb.*;
 import com.yahoo.ycsb.generator.*;
+import com.yahoo.ycsb.workloads.*;
 import com.yahoo.ycsb.measurements.ResultHandler;
 import com.yahoo.ycsb.measurements.ResultStorage;
-import org.infinispan.versioning.utils.version.Version;
-import org.infinispan.versioning.utils.version.VersionScalar;
 import redis.clients.jedis.Jedis;
 
 import java.io.*;
@@ -136,7 +135,7 @@ public class File_CoreWorkload extends Workload {
     /**
      * The default value for the writeallfields property.
      */
-    public static final String WRITE_ALL_FIELDS_PROPERTY_DEFAULT = "true";
+    public static final String WRITE_ALL_FIELDS_PROPERTY_DEFAULT = "false";
 
     boolean writeallfields;
 
@@ -537,7 +536,7 @@ public class File_CoreWorkload extends Workload {
             
             readDump(keys_file_path);
             
-            // readOldIdLog(oldIds_file_path);
+            readOldIdLog(oldIds_file_path);
             
             readReplayLog(replay_file_path);
         }
@@ -609,7 +608,6 @@ public class File_CoreWorkload extends Workload {
             } catch (Exception ex) {
                 Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
             }
-    	System.out.println("Number of keys = " + sortedkvales.size());
     }
     
     public void readReplayLog(String replay_file_path){
@@ -635,12 +633,13 @@ public class File_CoreWorkload extends Workload {
                     vals.put(url, null);
                     replay_sortedkvales.put(ts, vals);
                 }
-                if(aux[2].startsWith("http://en.wikipedia.org/w/") && aux[2].contains("oldid=")){
+                if(aux[2].startsWith("http://en.wikipedia.org/w/")){// && aux[2].contains("oldid=")
                     String url = aux[2].replace("http://en.wikipedia.org/w/index.php?", "");
                     String stringsplit[] = url.split("\\&");
                     
                     String url_final="";
                     Long revId = null;
+                    boolean history=false;
                     
                     for(String item : stringsplit){
                         if(item.startsWith("title=")){
@@ -651,12 +650,21 @@ public class File_CoreWorkload extends Workload {
                             if(item.replace("oldid=", "")!= null)
                                 revId = Long.parseLong(item.replace("oldid=", ""));
                         }
+                        if(item.startsWith("action=history")){
+                            history=true;
+                        }
                     }
-                    if(url_final != null && revId != null){
+                    if(!history){
                         Map vals = new HashMap();
                         vals.put(url_final, oldids.get(revId));
                         replay_sortedkvales.put(ts, vals);
-                    }       
+                    }
+                    else{
+                        Map vals = new HashMap();
+                        vals.put(url_final, 1L);
+                        replay_sortedkvales.put(ts, vals);
+                        
+                    }
                 }
             }
             for(Long v : replay_sortedkvales.keySet()){
@@ -732,7 +740,7 @@ public class File_CoreWorkload extends Workload {
             }
 
         }else{
-            key = String.valueOf(files_keys.get( ((int) keynum)%files_keys.size() )); // FIXME            
+            key = String.valueOf(files_keys.get((int) keynum));            
         }
 
         return key;
@@ -740,22 +748,22 @@ public class File_CoreWorkload extends Workload {
     }
     
     
-    public HashMap<Version,Object> buildValues(String keyname) {
-        HashMap<Version,Object> values = new HashMap<Version,Object>();
+    public HashMap<Object,Object> buildValues(String keyname) {
+        HashMap<Object,Object> values = new HashMap<Object,Object>();
         
         //List<Long> versions = kvalues.get(Long.parseLong(keyname));
         List<Long> versions = kvalues.get(keyname);
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-            values.put(new VersionScalar(version), data);
+            values.put(version, data);
         }
         return values;
     }
 
-    public HashMap<Version,Object> buildUpdate(String keyname) {
+    public HashMap<Object,Object> buildUpdate(String keyname) {
         //update a random field
-        HashMap<Version,Object> values = new HashMap<Version,Object>();
+        HashMap<Object,Object> values = new HashMap<Object,Object>();
         
         //List<Long> versions = kvalues.get(Long.parseLong(keyname));
         List<Long> versions = kvalues.get(keyname);
@@ -763,7 +771,7 @@ public class File_CoreWorkload extends Workload {
         int random = r.nextInt(versions.size());
 
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
-        values.put(new VersionScalar(versions.get(random)), data);
+        values.put(versions.get(random), data);
         return values;
     }
 
@@ -777,7 +785,7 @@ public class File_CoreWorkload extends Workload {
         int keynum = keysequence.nextInt();
         String dbkey = fetchKeyName(keynum, threadstate);
 
-        HashMap<Version,Object> values = buildValues(dbkey);
+        HashMap<Object,Object> values = buildValues(dbkey);
         if (db.insert(table, dbkey, values) == 0)
             return true;
         else
@@ -792,8 +800,8 @@ public class File_CoreWorkload extends Workload {
         
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
         
-        HashMap<Version,Object> value = new HashMap<Version,Object>();
-        value.put(new VersionScalar(version1), data);
+        HashMap<Object,Object> value = new HashMap<Object,Object>();
+        value.put(version1, data);
         
         
         //if there is a next key so that the difference can be calculated...
@@ -829,16 +837,19 @@ public class File_CoreWorkload extends Workload {
         String db_key = "";
         
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt()); 
-        HashMap<Version,Object> value = new HashMap<Version,Object>();
+        HashMap<Object,Object> value = new HashMap<Object,Object>();
+        
+        boolean dorange=false;
         
         for(Map.Entry<String,Long> db_item : replay_sortedkvales.get(version1).entrySet()){
             db_key = db_item.getKey();
             if(db_item.getValue()!= null)
-                value.put(new VersionScalar(db_item.getValue()),data);
+                value.put(db_item.getValue(),data);
+            if(db_item.getValue()!= null && db_item.getValue() == 1L)
+                dorange=true;
             else
-                value.put(new VersionScalar(version1), data);
-        }
-
+                value.put(version1, data);
+        }        
         //if there is a next key so that the difference can be calculated...
         if(keynum+1 < replay_sorted_files_keys.size()){
             Long version2 = replay_sorted_files_keys.get(keynum+1);
@@ -846,7 +857,15 @@ public class File_CoreWorkload extends Workload {
             
             diff = diff/this.speedup;
             
-            if (db.insert(table, db_key, value) == 0){
+            if (!dorange && db.read(table, db_key, value) == 0){
+                try {
+                    Thread.sleep(diff);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return true;
+            }
+            if (dorange && db.readRange(table, db_key, 0L ,version1) == 0){
                 try {
                     Thread.sleep(diff);
                 } catch (InterruptedException ex) {
@@ -858,7 +877,9 @@ public class File_CoreWorkload extends Workload {
                 return false;
         }
         else{     
-            if (db.read(table, db_key, new VersionScalar(version1)) == 0)
+            if (!dorange && db.read(table, db_key, value) == 0)
+                return true;
+            if (dorange && db.readRange(table, db_key, 0L ,version1) == 0)
                 return true;
             else
                 return false;
@@ -943,7 +964,7 @@ public class File_CoreWorkload extends Workload {
 
         Long version = nextVersion(keyname);
 
-	db.read(table, keyname, new VersionScalar(version));
+        db.read(table, keyname, version);
     }
     
     public void doTransactionReadRange(DB db,Object thread_state) {
@@ -956,7 +977,7 @@ public class File_CoreWorkload extends Workload {
         
         Long versionB = nextVersion(keyname);
 
-        db.readRange(table, keyname, new VersionScalar(versionA), new VersionScalar(versionB));
+        db.readRange(table, keyname, versionA,versionB);
     }
 
     public void doTransactionReadModifyWrite(DB db) {
@@ -969,7 +990,7 @@ public class File_CoreWorkload extends Workload {
         //String keyname = buildKeyName(keynum);
         String keyname = fetchKeyName(keynum,null);
 
-        HashMap<Version,Object> values;
+        HashMap<Object,Object> values;
 
         if (writeallfields) {
             //new data for all the fields
@@ -988,7 +1009,7 @@ public class File_CoreWorkload extends Workload {
 
         String dbkey = buildKeyName(keynum);
 
-        HashMap<Version,Object> values = buildValues(dbkey);
+        HashMap<Object,Object> values = buildValues(dbkey);
         db.insert(table, dbkey, values);
     }
     
