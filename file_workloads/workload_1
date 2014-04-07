@@ -36,4 +36,4 @@ readrangeproportion=1
 requestdistribution=uniform
 
 servers=localhost:12345
-versioningTechnique=TREEMAP
+versioningTechnique=DUMMY
