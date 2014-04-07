@@ -961,12 +961,8 @@ public class File_CoreWorkload extends Workload {
     public void doTransactionRead(DB db,Object thread_state) {
         //choose a random key
         int keynum = nextKeynum();
-
         String keyname = fetchKeyName(keynum,thread_state);
-
-        Long version = nextVersion(keyname);
-
-        db.read(table, keyname, new VersionScalar(version));
+        db.read(table, keyname);
     }
     
     public void doTransactionReadRange(DB db,Object thread_state) {

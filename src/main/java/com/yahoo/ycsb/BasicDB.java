@@ -106,17 +106,12 @@ public class BasicDB extends DB
 	}
 
     @Override
-    public int read(String table, String key, Version version) {
+    public int read(String table, String key) {
         delay();
 
 		if (verbose)
 		{
 			System.out.print("READ "+table+" "+key+" [ ");
-			if (version!=null)
-			{
-                            System.out.print(version+" ");
-			}
-
 			System.out.println("]");
 		}
 
