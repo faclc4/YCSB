@@ -1,39 +1,18 @@
 package com.yahoo.ycsb.workloads;
 
+import de.ruedigermoeller.serialization.FSTObjectInput;
+import de.ruedigermoeller.serialization.FSTObjectOutput;
 import info.bliki.wiki.dump.IArticleFilter;
 import info.bliki.wiki.dump.Siteinfo;
 import info.bliki.wiki.dump.WikiArticle;
 import info.bliki.wiki.dump.WikiXMLParser;
+import org.xml.sax.SAXException;
 
-import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.math.BigInteger;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.xml.sax.SAXException;
-
-import de.ruedigermoeller.serialization.FSTObjectInput;
-import de.ruedigermoeller.serialization.FSTObjectOutput;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -199,7 +178,7 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
                 BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
 
                 String line = "";
-            try {            
+            try {
                 while ((line = input_reader.readLine()) != null) {
                     String [] aux = line.split("\\s");
                     
@@ -230,17 +209,19 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
 	 */
 	public static void main(String[] args) throws Exception {
 		
-                
-		String bz2Filename = null; 
+		String bz2Filename = null;
+        String outputName = "dump";
 		if (args.length == 0) {
 			System.out.println("Reading from stdin");
 		} else {
-			bz2Filename = args[0];
+            bz2Filename = args[0];
+            outputName = bz2Filename.split("xml")[0];
 			System.out.println("Reading from file: " + bz2Filename);
 		}
 		
 		try {
-			CompressedDumpParser  handler = new CompressedDumpParser();
+
+            CompressedDumpParser  handler = new CompressedDumpParser();
 			WikiXMLParser wxp = null;
 			if(bz2Filename != null) {
 				wxp = new WikiXMLParser(bz2Filename, handler);
@@ -249,15 +230,11 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
 			}
 			wxp.parse();
 			
-			
 			System.out.println( handler.pageRevisions.keySet().size() + " pages read. Revisions:" + handler.revisions);
 
-			System.out.println("Dumping data");
-			//handler.writeData(new FileOutputStream("dump.obj"), handler.pageRevisions);
-                        handler.writeDataRevs(new FileOutputStream("dumpRevs.obj"), handler.revisionIds);
-                        
-                        //System.out.println("Dumping stats");
-                        //handler.writeStats("stats.txt", stats);
+            System.out.println("Dumping datax ... ");
+            handler.writeData(new FileOutputStream(outputName+"dat"), handler.pageRevisions);
+            handler.writeDataRevs(new FileOutputStream(outputName+"rev"), handler.revisionIds);
 			System.out.println("That's all folks!");
 			
 			//reading test

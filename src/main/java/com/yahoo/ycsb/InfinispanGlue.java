@@ -18,8 +18,8 @@ public class InfinispanGlue extends DB {
 
   public static final int OK = 0;
   public static final int ERROR = -1;
-  public static final boolean debug = false;
 
+   private boolean debug;
   private RemoteVersionedCache<String, String> cache;
   private VersionScalarGenerator vsg = new VersionScalarGenerator();
 
@@ -29,6 +29,7 @@ public class InfinispanGlue extends DB {
   public void init() throws DBException {
     String servers = super._p.getProperty("servers", "localhost:12345");
     String versioningTechnique = super._p.getProperty("versioningTechnique", "ATOMICMAP");
+    debug =super._p.getProperty("debug", "false").equals("true");
 
     System.out.println("Versioning technique = "+versioningTechnique);
     System.out.println("RMI Servers = "+servers);
@@ -60,10 +61,9 @@ public class InfinispanGlue extends DB {
      version: The version that should be considered when performing a read
   */
     public int read(String table, String key, Version version) {
-    if (debug) System.out.println("Implement a read function to ISNP");
     try {
-      Object value = this.cache.get(key);
-      // System.out.println("key is: " + key+" :"+value);
+      String value = this.cache.get(key);
+        if (debug) System.out.println(key+" => "+value);
     } catch (RemoteException re) {
       re.printStackTrace();
       return ERROR;
@@ -79,12 +79,11 @@ public class InfinispanGlue extends DB {
      versionA and versionB: The versions that should be considered when performing a read range
   */
     public int readRange(String table, String key, Version versionA,Version versionB) {
-    if (debug) System.out.println("This is  Readrange");
     Version vA = this.vsg.increment(versionA);
     Version vB = this.vsg.increment(versionB);
     try{
       Collection<String> values = cache.get(key, vA, vB);
-      System.out.println("key is: " + key+" ranging "+versionA.toString()+" - "+versionB.toString()+" :"+values.size());
+      if(debug) System.out.println(key+" (R) => " + values);
     } catch (RemoteException re) {
       re.printStackTrace();
       return ERROR;
@@ -115,9 +114,7 @@ public class InfinispanGlue extends DB {
      values: a Map of <version,value> to be inserted. version and values are contructed from the dump file.
   */
     public int insert(String table, String key, HashMap<Version, ByteIterator> map) {
-    if (debug) System.out.println("This is an insert");
-    // System.out.println("key is: " + key);
-    if (debug) System.out.println("versions:values map equals: " + map.toString());
+      if (debug) System.out.println(key+" (I) => " + map.toString());
     try {
         this.cache.putAll(key,StringByteIterator.getVersionStringMap(map));
     } catch (RemoteException e) {
