@@ -1010,6 +1010,14 @@ public class File_CoreWorkload extends Workload {
         HashMap<Version,ByteIterator> values = buildValues(dbkey);
         db.insert(table, dbkey, values);
     }
+
+    public int getDumpSize(){
+        return files_keys.size();
+    }
+
+    public int getReplaySize(){
+        return replay_sorted_files_keys.size();
+    }
     
 
 }
