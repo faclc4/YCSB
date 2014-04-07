@@ -741,7 +741,6 @@ public class File_CoreWorkload extends Workload {
             }
 
         }else{
-            System.out.println(keynum);
             key = String.valueOf(files_keys.get( ((int) keynum)%files_keys.size() )); // FIXME
         }
 
