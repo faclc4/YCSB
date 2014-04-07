@@ -964,9 +964,10 @@ public class File_CoreWorkload extends Workload {
 
         String keyname = fetchKeyName(keynum,thread_state);
 
-        Long version = nextVersion(keyname);
+        //Long version = nextVersion(keyname);
 
-        db.read(table, keyname, new VersionScalar(version));
+        //db.read(table, keyname, new VersionScalar(version));
+	db.read(table,keyname);
     }
     
     public void doTransactionReadRange(DB db,Object thread_state) {
@@ -1013,6 +1014,14 @@ public class File_CoreWorkload extends Workload {
 
         HashMap<Version,ByteIterator> values = buildValues(dbkey);
         db.insert(table, dbkey, values);
+    }
+
+    public int getDumpSize(){
+        return files_keys.size();
+    }
+
+    public int getReplaySize(){
+        return replay_sorted_files_keys.size();
     }
     
 

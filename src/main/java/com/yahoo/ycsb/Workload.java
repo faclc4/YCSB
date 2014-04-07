@@ -114,4 +114,8 @@ public abstract class Workload
         else return false;
       }
 
+     public abstract int getDumpSize();
+
+     public abstract int getReplaySize();
+
 }

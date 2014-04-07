@@ -796,7 +796,8 @@ public class Client
 		int opcount;
 		if (dotransactions)
 		{
-			opcount=Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY,"0"));
+			//opcount=Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY,"0"));
+			opcount=workload.getReplaySize();
 		}
 		else
 		{
@@ -806,7 +807,8 @@ public class Client
 			}
 			else
 			{
-				opcount=Integer.parseInt(props.getProperty(RECORD_COUNT_PROPERTY,"0"));
+				//opcount=Integer.parseInt(props.getProperty(RECORD_COUNT_PROPERTY,"0"));
+				opcount=workload.getDumpSize();
 			}
 		}
 
