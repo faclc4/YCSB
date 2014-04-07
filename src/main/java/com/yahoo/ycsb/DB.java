@@ -82,8 +82,27 @@ public abstract class DB
 	}
 
 
+    /**
+     *
+     * Read the latest value stored at key <i>key</i>.
+     *
+     * @param table
+     * @param key
+     * @return
+     */
     public abstract int read(String table, String key);
 
+
+    /**
+     *
+     * Read all the values between version <i>versionA</i> and <i>versionB</i>.
+     *
+     * @param table
+     * @param key
+     * @param versionA
+     * @param version
+     * @return
+     */
     public abstract int readRange(String table, String key, Version versionA, Version version);
 
 	public abstract int update(String table, String key, HashMap<Version,ByteIterator> map);

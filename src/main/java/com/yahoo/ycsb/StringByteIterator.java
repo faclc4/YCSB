@@ -71,8 +71,8 @@ public class StringByteIterator extends ByteIterator {
 
     public static HashMap<Version, String> getVersionStringMap(Map<Version, ByteIterator> m) {
         HashMap<Version, String> ret = new HashMap<Version,String>();
-        for(Version s: m.keySet()) {
-            ret.put(s, m.get(s).toString());;
+        for(Version v: m.keySet()) {
+            ret.put(v, m.get(v).toString());
         }
         return ret;
 
