@@ -853,40 +853,39 @@ public class File_CoreWorkload extends Workload {
         }
 
         //if there is a next key so that the difference can be calculated...
-//        if(keynum+1 < replay_sorted_files_keys.size()){
-//            Long version2 = replay_sorted_files_keys.get(keynum+1);
-//            Long diff = version2-version1;
-//
-//            diff = diff/this.speedup;
-//
-//            if (!dorange && db.read(table, db_key, value) == 0){
-//                try {
-//                    Thread.sleep(diff);
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//                return true;
-//            }
-//            if (dorange && db.readRange(table, db_key, new VersionScalar(0),new VersionScalar(version1)) == 0){
-//                try {
-//                    Thread.sleep(diff);
-//                } catch (InterruptedException ex) {
-//                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-//                }
-//                return true;
-//            }
-//            else
-//                return false;
-//        }
-//        else{
-//            if (!dorange && db.read(table, db_key, value) == 0)
-//                return true;
-//            if (dorange && db.readRange(table, db_key, new VersionScalar(0) ,new VersionScalar(version1)) == 0)
-//                return true;
-//            else
-//                return false;
-//        }
-        return true;
+        if(keynum+1 < replay_sorted_files_keys.size()){
+            Long version2 = replay_sorted_files_keys.get(keynum+1);
+            Long diff = version2-version1;
+
+            diff = diff/this.speedup;
+
+            if (!dorange && db.read(table, db_key) == 0){
+                try {
+                    Thread.sleep(diff);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return true;
+            }
+            if (dorange && db.readRange(table, db_key, new VersionScalar(0),new VersionScalar(version1)) == 0){
+                try {
+                    Thread.sleep(diff);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                return true;
+            }
+            else
+                return false;
+        }
+        else{
+            if (!dorange && db.read(table, db_key) == 0)
+                return true;
+            if (dorange && db.readRange(table, db_key, new VersionScalar(0) ,new VersionScalar(version1)) == 0)
+                return true;
+            else
+                return false;
+        }
     }
 
     /**

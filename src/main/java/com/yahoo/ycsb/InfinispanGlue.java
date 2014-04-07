@@ -60,7 +60,7 @@ public class InfinispanGlue extends DB {
      key: the key to be read. Key is selected according to distribution from the dump file.
      version: The version that should be considered when performing a read
   */
-    public int read(String table, String key, Version version) {
+    public int read(String table, String key) {
     try {
       String value = this.cache.get(key);
         if (debug) System.out.println(key+" => "+value);

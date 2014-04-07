@@ -81,17 +81,15 @@ public abstract class DB
 	{
 	}
 
-	public abstract int read(String table, String key, Version version);
 
+    public abstract int read(String table, String key);
 
-	public abstract int readRange(String table, String key, Version versionA, Version versionB);
-	
+    public abstract int readRange(String table, String key, Version versionA, Version version);
 
 	public abstract int update(String table, String key, HashMap<Version,ByteIterator> map);
 
-
 	public abstract int insert(String table, String key, HashMap<Version,ByteIterator> map);
 
-
 	public abstract int delete(String table, String key);
+
 }

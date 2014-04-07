@@ -74,9 +74,9 @@ public class DBWrapper extends DB
 
 
     @Override
-    public int read(String table, String key, Version version) {
+    public int read(String table, String key) {
         long st=System.nanoTime();
-		int res=_db.read(table,key,version);
+		int res=_db.read(table,key);
 		long en=System.nanoTime();
         int time = (int)((en-st)/1000);
         time = (time<0) ? Integer.MAX_VALUE : time;
