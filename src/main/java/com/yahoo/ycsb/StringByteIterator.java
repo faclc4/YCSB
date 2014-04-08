@@ -64,15 +64,15 @@ public class StringByteIterator extends ByteIterator {
 		HashMap<String, String> ret = new HashMap<String,String>();
 
 		for(String s: m.keySet()) {
-			ret.put(s, m.get(s).toString());;
+			ret.put(s, m.get(s).toString());
 		}
 		return ret;
 	}
 
-    public static HashMap<Version, String> getVersionStringMap(Map<Version, ByteIterator> m) {
+    public static Map<Version, String> getVersionStringMap(Map<Version, ByteIterator> m) {
         HashMap<Version, String> ret = new HashMap<Version,String>();
         for(Version v: m.keySet()) {
-            ret.put(v, m.get(v).toString());
+            ret.put(v, new String(m.get(v).toArray()));
         }
         return ret;
 

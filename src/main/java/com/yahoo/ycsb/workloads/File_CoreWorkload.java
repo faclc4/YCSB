@@ -594,6 +594,8 @@ public class File_CoreWorkload extends Workload {
         CompressedDumpParser  handler = new CompressedDumpParser();
             try {
                 kvalues = handler.readData(new FileInputStream(keys_file_path));
+
+                System.out.println(kvalues.size()+" keys");
                 
                 for(String key : kvalues.keySet()){
                     files_keys.add(key);
@@ -987,7 +989,7 @@ public class File_CoreWorkload extends Workload {
         int keynum = nextKeynum();
 
         //String keyname = buildKeyName(keynum);
-        String keyname = fetchKeyName(keynum,null);
+        String keyname = fetchKeyName(keynum, null);
 
         HashMap<Version,ByteIterator> values;
 

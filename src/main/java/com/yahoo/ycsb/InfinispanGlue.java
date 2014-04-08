@@ -7,8 +7,7 @@ import org.infinispan.versioning.utils.version.VersionScalarGenerator;
 
 import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.util.Collection;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * 
@@ -19,7 +18,7 @@ public class InfinispanGlue extends DB {
   public static final int OK = 0;
   public static final int ERROR = -1;
 
-   private boolean debug;
+  private boolean debug;
   private RemoteVersionedCache<String, String> cache;
   private VersionScalarGenerator vsg = new VersionScalarGenerator();
 
@@ -27,15 +26,18 @@ public class InfinispanGlue extends DB {
    * This function is used to intiate the connection to USPN.and executed once per client thread.
    */
   public void init() throws DBException {
-    String servers = super._p.getProperty("servers", "localhost:12345");
+    String serverList = super._p.getProperty("servers", "localhost:12345");
     String versioningTechnique = super._p.getProperty("versioningTechnique", "ATOMICMAP");
     debug =super._p.getProperty("debug", "false").equals("true");
 
-    System.out.println("Versioning technique = "+versioningTechnique);
-    System.out.println("RMI Servers = "+servers);
+    Random rand = new Random(System.nanoTime());
+    String server = serverList.split(";")[rand.nextInt(serverList.split(";").length)];
 
-    try{ 
-      String serviceURL = "//" + servers + "/"	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"	+ versioningTechnique;
+    System.out.println("Versioning technique = "+versioningTechnique);
+    System.out.println("RMI Servers = "+serverList);
+
+      try{
+      String serviceURL = "//" + server + "/"	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"	+ versioningTechnique;
       System.out.print("Connecting to " + serviceURL + " ... ");
       this.cache = (RemoteVersionedCache<String, String>) Naming.lookup(serviceURL);
       System.out.println("[\u001b[1;44m OK \u001b[m]");
@@ -83,7 +85,7 @@ public class InfinispanGlue extends DB {
     Version vB = this.vsg.increment(versionB);
     try{
       Collection<String> values = cache.get(key, vA, vB);
-      if(debug) System.out.println(key+" (R) => " + values);
+      if(debug) System.out.println(key+" (R "+vA.toString()+","+vB.toString()+") => " + values);
     } catch (RemoteException re) {
       re.printStackTrace();
       return ERROR;
@@ -114,11 +116,13 @@ public class InfinispanGlue extends DB {
      values: a Map of <version,value> to be inserted. version and values are contructed from the dump file.
   */
     public int insert(String table, String key, HashMap<Version, ByteIterator> map) {
-      if (debug) System.out.println(key+" (I) => " + map.toString());
+      Map<Version, String> m = StringByteIterator.getVersionStringMap(map);
+      if (debug) System.out.println(key+" (I) => " + m);
     try {
-        this.cache.putAll(key,StringByteIterator.getVersionStringMap(map));
+        this.cache.putAll(key,m);
     } catch (RemoteException e) {
         e.printStackTrace();  // TODO: Customise this generated block
+        return ERROR;
     }
 
       return OK;
