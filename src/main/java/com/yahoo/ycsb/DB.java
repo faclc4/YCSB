@@ -95,7 +95,7 @@ public abstract class DB
 
     /**
      *
-     * Read all the values between version <i>versionA</i> and <i>versionB</i>.
+     * Read all the values between version <i>versionA</i> and <i>versionB</i>
      *
      * @param table
      * @param key

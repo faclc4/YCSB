@@ -84,8 +84,9 @@ public class InfinispanGlue extends DB {
     Version vA = this.vsg.increment(versionA);
     Version vB = this.vsg.increment(versionB);
     try{
-      Collection<String> values = cache.get(key, vA, vB);
-      if(debug) System.out.println(key+" (R "+vA.toString()+","+vB.toString()+") => " + values);
+        if(debug) System.out.println(key+" (R "+vA.toString()+","+vB.toString()+") => ");
+        Collection<String> values = cache.get(key, vA, vB);
+        if(debug) System.out.println(values);
     } catch (RemoteException re) {
       re.printStackTrace();
       return ERROR;
@@ -101,11 +102,16 @@ public class InfinispanGlue extends DB {
      values: a Map of <version,value> to be inserted. version and values are contructed from the dump file.
   */
     public int update(String table, String key, HashMap<Version, ByteIterator> values) {
-//    if (debug) System.out.println("This is  update");
-//    if (debug) System.out.println("key is: " + key);
-//    if (debug) System.out.println("versions are: " + values.toString());
-//    return OK;
-      throw new RuntimeException("NYI");
+      Map<Version, String> m = StringByteIterator.getVersionStringMap(values);
+      if (debug) System.out.println(key+" (U) => " + m);
+      try {
+          this.cache.putAll(key,m);
+      } catch (RemoteException e) {
+          e.printStackTrace();
+          return ERROR;
+      }
+
+      return OK;
   }
 
   @Override
@@ -121,7 +127,7 @@ public class InfinispanGlue extends DB {
     try {
         this.cache.putAll(key,m);
     } catch (RemoteException e) {
-        e.printStackTrace();  // TODO: Customise this generated block
+        e.printStackTrace();
         return ERROR;
     }
 

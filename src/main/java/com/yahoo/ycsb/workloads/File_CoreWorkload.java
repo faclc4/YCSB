@@ -978,7 +978,10 @@ public class File_CoreWorkload extends Workload {
         
         Long versionB = nextVersion(keyname);
 
-        db.readRange(table, keyname, new VersionScalar(versionA),new VersionScalar(versionB));
+        if(versionA < versionB)
+            db.readRange(table, keyname, new VersionScalar(versionA),new VersionScalar(versionB));
+        else
+            db.readRange(table, keyname, new VersionScalar(versionB),new VersionScalar(versionA));
     }
 
     public void doTransactionReadModifyWrite(DB db) {
