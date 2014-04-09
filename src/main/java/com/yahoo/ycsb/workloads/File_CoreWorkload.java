@@ -743,8 +743,7 @@ public class File_CoreWorkload extends Workload {
             }
 
         }else{
-            //key = String.valueOf(files_keys.get( ((int) keynum)%files_keys.size() )); // FIXME
-	      key = String.valueOf(files_keys.get( ((int) keynum ) ));
+            key = String.valueOf(files_keys.get( ((int) keynum)%files_keys.size() ));
         }
 
         return key;

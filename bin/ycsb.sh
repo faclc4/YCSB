@@ -75,7 +75,7 @@ else
   exit 1
 fi
 
-JAVA_HEAP_MAX=-Xmx500m
+JAVA_HEAP_MAX="-Xmx2650M -XX:MaxPermSize=50M"
 # check envvars which might override default args
 if [ "$YCSB_HEAP_SIZE" != "" ]; then
   JAVA_HEAP_MAX="-Xmx""$YCSB_HEAP_SIZE""m"
