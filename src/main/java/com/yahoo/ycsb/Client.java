@@ -681,10 +681,10 @@ public class Client
 			}
 			
 			if(dotransactions){
-                	   props.put("load", false);
+                	   props.put("load", "false");
                 	}
                 	if(!dotransactions){
-                    	   props.put("load", true);
+                    	   props.put("load", "true");
                 	}
 
 			if (argindex>=args.length)
