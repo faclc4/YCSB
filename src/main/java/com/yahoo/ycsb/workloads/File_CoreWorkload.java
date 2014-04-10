@@ -411,6 +411,7 @@ public class File_CoreWorkload extends Workload {
         fieldcount = Integer.parseInt(p.getProperty(FIELD_COUNT_PROPERTY, FIELD_COUNT_PROPERTY_DEFAULT));
         fieldlengthgenerator = File_CoreWorkload.getFieldLengthGenerator(p);
 
+        boolean load = Boolean.parseBoolean(p.getProperty("load"));
         double readproportion = Double.parseDouble(p.getProperty(READ_PROPORTION_PROPERTY, READ_PROPORTION_PROPERTY_DEFAULT));
         speedup = Long.parseLong(p.getProperty(SPEEDUP_PROPERTY, SPEEDUP_PROPERTY_DEFAULT));
         double readrangeproportion = Double.parseDouble(p.getProperty(READRANGE_PROPORTION_PROPERTY, READRANGE_PROPORTION_PROPERTY_DEFAULT));
@@ -531,15 +532,15 @@ public class File_CoreWorkload extends Workload {
         }
 
         if (keys_file_path != null && replay_file_path != null) {
-            /*
-            readXML(keys_file_path);
-            */
-            
-            readDump(keys_file_path);
+            if(load){
+                readDump(keys_file_path);
+            }
+            else{
             
             readOldIdLog(oldIds_file_path);
             
             readReplayLog(replay_file_path);
+            }
         }
 
         if (redis_database_info != null) {
