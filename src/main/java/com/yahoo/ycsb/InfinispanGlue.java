@@ -31,7 +31,7 @@ public class InfinispanGlue extends DB {
     debug =super._p.getProperty("debug", "false").equals("true");
 
     Random rand = new Random(System.nanoTime());
-    String server = serverList.split(";")[rand.nextInt(serverList.split(" ").length)];
+    String server = serverList.split(" ")[rand.nextInt(serverList.split(" ").length)];
 
     System.out.println("Versioning technique = "+versioningTechnique);
     System.out.println("RMI Servers = "+serverList);
