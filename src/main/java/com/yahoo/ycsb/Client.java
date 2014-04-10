@@ -679,6 +679,13 @@ public class Client
 				usageMessage();
 				System.exit(0);
 			}
+			
+			if(dotransactions){
+                	   props.put("load", false);
+                	}
+                	if(!dotransactions){
+                    	   props.put("load", true);
+                	}
 
 			if (argindex>=args.length)
 			{
