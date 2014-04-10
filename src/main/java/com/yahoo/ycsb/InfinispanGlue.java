@@ -31,16 +31,16 @@ public class InfinispanGlue extends DB {
     debug =super._p.getProperty("debug", "false").equals("true");
 
     Random rand = new Random(System.nanoTime());
-    String server = serverList.split(";")[rand.nextInt(serverList.split(";").length)];
+    String server = serverList.split(";")[rand.nextInt(serverList.split(" ").length)];
 
     System.out.println("Versioning technique = "+versioningTechnique);
     System.out.println("RMI Servers = "+serverList);
 
       try{
       String serviceURL = "//" + server + "/"	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"	+ versioningTechnique;
-      System.out.print("Connecting to " + serviceURL + " ... ");
+      if(debug) System.out.print("Connecting to " + serviceURL + " ... ");
       this.cache = (RemoteVersionedCache<String, String>) Naming.lookup(serviceURL);
-      System.out.println("[\u001b[1;44m OK \u001b[m]");
+      if(debug) System.out.println("[\u001b[1;44m OK \u001b[m]");
 
 
       if(super._p.getProperty("clear","false").equals("true")){
