@@ -597,6 +597,7 @@ public class File_CoreWorkload extends Workload {
                 kvalues = handler.readData(new FileInputStream(keys_file_path));
 
                 System.out.println(kvalues.size()+" keys");
+                System.out.println(kvalues.values().size()+" versions");
                 
                 for(String key : kvalues.keySet()){
                     files_keys.add(key);
@@ -615,6 +616,7 @@ public class File_CoreWorkload extends Workload {
     }
     
     public void readReplayLog(String replay_file_path){
+        System.out.print("Reading replay log ...");
         FileInputStream input_file_stream = null;
         try {
            input_file_stream = new FileInputStream(replay_file_path);
@@ -677,15 +679,18 @@ public class File_CoreWorkload extends Workload {
         } catch (IOException ex) {
             Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
         }
+        System.out.println("done");
     }
     
     public void readOldIdLog(String oldId_file_path){
+        System.out.print("Reading old IDs ... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
-            try {
-               oldids = handler.readOldID(new FileInputStream(oldId_file_path)); 
-            } catch (Exception ex) {
-                Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-            }
+        try {
+            oldids = handler.readOldID(new FileInputStream(oldId_file_path));
+        } catch (Exception ex) {
+            Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        System.out.println("done");
     }
 
     @Override

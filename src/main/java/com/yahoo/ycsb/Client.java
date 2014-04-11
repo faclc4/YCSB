@@ -276,9 +276,13 @@ class ClientThread extends Thread
                     while (((_opcount == 0) || (_opsdone < _opcount)) && !_workload.isStopRequested())
                     {
 
-                        if (!_workload.doInsert(_db,_workloadstate))
-                        {
-                            break;
+                        try{
+                            if (!_workload.doInsert(_db,_workloadstate))
+                            {
+                                break;
+                            }
+                        }catch(Exception e){
+                            e.printStackTrace();
                         }
 
                         _opsdone++;
@@ -323,9 +327,15 @@ class ClientThread extends Thread
                     while (((_opcount == 0) || (_opsdone < _opcount)) && !_workload.isStopRequested())
                     {
 
-                        if (!_workload.doTransactionReplay(_db, _workloadstate))
-                        {
-                            break;
+                        try{
+
+                            if (!_workload.doTransactionReplay(_db, _workloadstate))
+                            {
+                                break;
+                            }
+
+                        }catch(Exception e){
+                            e.printStackTrace();;
                         }
 
                         _opsdone++;
@@ -364,9 +374,14 @@ class ClientThread extends Thread
                         //esperar diff --> sleep(diff)
 
 
-                        if (!_workload.doReplayInsert(_db, _workloadstate))
-                        {
-                            break;
+                        try{
+
+                            if (!_workload.doReplayInsert(_db, _workloadstate))
+                            {
+                                break;
+                            }
+                        }catch(Exception e){
+                            e.printStackTrace();
                         }
 
                         _opsdone++;
