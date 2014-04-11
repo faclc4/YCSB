@@ -532,15 +532,15 @@ public class File_CoreWorkload extends Workload {
         }
 
         if (keys_file_path != null && replay_file_path != null) {
-            if(load){
-                readDump(keys_file_path);
-            }
-            else{
+            //if(load){
+            //    readDump(keys_file_path);
+            //}
+            //else{
             
             readRevisions(oldIds_file_path);
             
             readReplayLog(replay_file_path);
-            }
+            //}
         }
 
         if (redis_database_info != null) {
@@ -793,9 +793,22 @@ public class File_CoreWorkload extends Workload {
      */
     public boolean doInsert(DB db, Object threadstate) {
         int keynum = keysequence.nextInt();
-        String dbkey = fetchKeyName(keynum, threadstate);
+        //String dbkey = fetchKeyName(keynum, threadstate);
 
-        HashMap<Version,ByteIterator> values = buildValues(dbkey);
+        //HashMap<Version,ByteIterator> values = buildValues(dbkey);
+        
+        Long ts = replay_sorted_articles_keys.get(keynum);
+        
+        Map<String,Long> dat = replay_sortedkvales.get(ts);
+        
+        Map.Entry<String,Long> vals  = dat.entrySet().iterator().next();
+        String dbkey = vals.getKey();
+        Long version = vals.getValue();
+        
+        HashMap<Object,Object> values = new HashMap<Object,Object>();
+        ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
+        values.put(version, data);
+        
         if (db.insert(table, dbkey, values) == 0)
             return true;
         else
