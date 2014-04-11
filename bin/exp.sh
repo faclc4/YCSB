@@ -30,9 +30,9 @@ function listIP(){
 servers=(`listIP "multiversion-se" "psutra"`) 
 clients=(`listIP "multiversion-cl" "psutra"`) 
 
-wikis="se scn simple jap" # scn se
+wikis="scn simple jap" # scn se
 versioningTechniques="DUMMY ATOMICMAP TREEMAP" 
-threads="25 50 75 100 125 150"
+threads="25 50 75 100"
 
 for wiki in ${wikis} 
 do
