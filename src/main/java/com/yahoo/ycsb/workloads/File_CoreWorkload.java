@@ -338,17 +338,17 @@ public class File_CoreWorkload extends Workload {
 
     public static boolean KEY_INPUT_SOURCE = FILE_INPUT;
 
-    public static ArrayList<String> files_keys;
+    public static ArrayList<String> articles_keys;
     
-    public static ArrayList<Long> sorted_files_keys;
+    public static ArrayList<Long> sorted_articles_keys;
     
-    public static ArrayList<Long> replay_sorted_files_keys;
+    public static ArrayList<Long> replay_sorted_articles_keys;
     
-    public static Map<String,List<Long>> kvalues;
+    public static Map<String,List<Long>> articles_to_revisions_list;
     
-    public static Map<String,Long> oldids;
+    public static Map<String,Long> revisions_timestamps;
     
-    public Map<Long,String> sortedkvales;
+    public Map<Long,String> revisions_to_articles;
     
     public Map<Long,Map<String,Long>> replay_sortedkvales;
 
@@ -507,17 +507,17 @@ public class File_CoreWorkload extends Workload {
 
         use_file_columns = Boolean.parseBoolean(p.getProperty(USE_FILE_COLUMNS_PROPERTY, USE_FILE_COLUMNS_DEFAULT_PROPERTY));
 
-        files_keys = new ArrayList<String>();
+        articles_keys = new ArrayList<String>();
         
-        sorted_files_keys = new ArrayList<Long>();
+        sorted_articles_keys = new ArrayList<Long>();
         
-        replay_sorted_files_keys = new ArrayList<Long>();
+        replay_sorted_articles_keys = new ArrayList<Long>();
         
-        kvalues = new HashMap<String,List<Long>>();
+        articles_to_revisions_list = new HashMap<String,List<Long>>();
         
-        oldids = new HashMap<String,Long>();
+        revisions_timestamps = new HashMap<String,Long>();
         
-        sortedkvales = new TreeMap<Long,String>();
+        revisions_to_articles = new TreeMap<Long,String>();
         
         replay_sortedkvales = new TreeMap<Long,Map<String,Long>>();
 
@@ -537,7 +537,7 @@ public class File_CoreWorkload extends Workload {
             }
             else{
             
-            readOldIdLog(oldIds_file_path);
+            readRevisions(oldIds_file_path);
             
             readReplayLog(replay_file_path);
             }
@@ -592,27 +592,30 @@ public class File_CoreWorkload extends Workload {
     }
 
     public void readDump(String keys_file_path){
+        System.out.print("Reading dump ... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
             try {
-                kvalues = handler.readData(new FileInputStream(keys_file_path));
+                articles_to_revisions_list = handler.readDump(new FileInputStream(keys_file_path));
 
-                System.out.println(kvalues.size()+" keys");
-                System.out.println(kvalues.values().size()+" versions");
+                System.out.print(articles_to_revisions_list.size() + " articles, ");
                 
-                for(String key : kvalues.keySet()){
-                    files_keys.add(key);
-                    for(Long version : kvalues.get(key)){
-                        sortedkvales.put(version, key);
+                for(String key : articles_to_revisions_list.keySet()){
+                    articles_keys.add(key);
+                    for(Long version : articles_to_revisions_list.get(key)){
+                        revisions_to_articles.put(version, key);
                     }
                 }
+
+                System.out.print(revisions_to_articles.size() + " revisions");
                 
-                for(Long v : sortedkvales.keySet()){
-                    sorted_files_keys.add(v);
+                for(Long v : revisions_to_articles.keySet()){
+                    sorted_articles_keys.add(v);
                 }
                 
             } catch (Exception ex) {
                 Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
             }
+        System.out.println("... done");
     }
     
     public void readReplayLog(String replay_file_path){
@@ -662,7 +665,7 @@ public class File_CoreWorkload extends Workload {
                     }
                     if(!history){
                         Map vals = new HashMap();
-                        vals.put(url_final, oldids.get(revId));
+                        vals.put(url_final, revisions_timestamps.get(revId));
                         replay_sortedkvales.put(ts, vals);
                     }
                     else{
@@ -674,7 +677,7 @@ public class File_CoreWorkload extends Workload {
                 }
             }
             for(Long v : replay_sortedkvales.keySet()){
-                replay_sorted_files_keys.add(v);
+                replay_sorted_articles_keys.add(v);
             }
         } catch (IOException ex) {
             Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
@@ -682,11 +685,11 @@ public class File_CoreWorkload extends Workload {
         System.out.println("done");
     }
     
-    public void readOldIdLog(String oldId_file_path){
-        System.out.print("Reading old IDs ... ");
+    public void readRevisions(String oldId_file_path){
+        System.out.print("Reading revisions... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
         try {
-            oldids = handler.readOldID(new FileInputStream(oldId_file_path));
+            revisions_timestamps = handler.readRevisions(new FileInputStream(oldId_file_path));
         } catch (Exception ex) {
             Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -749,7 +752,7 @@ public class File_CoreWorkload extends Workload {
             }
 
         }else{
-            key = String.valueOf(files_keys.get( ((int) keynum)%files_keys.size() ));
+            key = String.valueOf(articles_keys.get(((int) keynum) % articles_keys.size()));
         }
 
         return key;
@@ -760,8 +763,7 @@ public class File_CoreWorkload extends Workload {
     public HashMap<Version,ByteIterator> buildValues(String keyname) {
         HashMap<Version,ByteIterator> values = new HashMap<Version,ByteIterator>();
         
-        //List<Long> versions = kvalues.get(Long.parseLong(keyname));
-        List<Long> versions = kvalues.get(keyname);
+        List<Long> versions = articles_to_revisions_list.get(keyname);
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
@@ -774,8 +776,7 @@ public class File_CoreWorkload extends Workload {
         //update a random field
         HashMap<Version,ByteIterator> values = new HashMap<Version,ByteIterator>();
         
-        //List<Long> versions = kvalues.get(Long.parseLong(keyname));
-        List<Long> versions = kvalues.get(keyname);
+        List<Long> versions = articles_to_revisions_list.get(keyname);
         Random r = new Random();
         int random = r.nextInt(versions.size());
 
@@ -804,8 +805,8 @@ public class File_CoreWorkload extends Workload {
     public boolean doReplayInsert(DB db, Object threadstate) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
-        Long version1 = sorted_files_keys.get(keynum);
-        String db_key = String.valueOf(sortedkvales.get(version1));
+        Long version1 = sorted_articles_keys.get(keynum);
+        String db_key = String.valueOf(revisions_to_articles.get(version1));
         
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
         
@@ -814,8 +815,8 @@ public class File_CoreWorkload extends Workload {
         
         
         //if there is a next key so that the difference can be calculated...
-        if(keynum+1 < sorted_files_keys.size()){
-            Long version2 = sorted_files_keys.get(keynum+1);
+        if(keynum+1 < sorted_articles_keys.size()){
+            Long version2 = sorted_articles_keys.get(keynum+1);
             Long diff = version2-version1;
             
             diff = diff/this.speedup;
@@ -842,7 +843,7 @@ public class File_CoreWorkload extends Workload {
     public boolean doTransactionReplay(DB db, Object threadstate) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
-        Long version1 = replay_sorted_files_keys.get(keynum);
+        Long version1 = replay_sorted_articles_keys.get(keynum);
         String db_key = "";
         
         ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt()); 
@@ -861,8 +862,8 @@ public class File_CoreWorkload extends Workload {
         }
 
         //if there is a next key so that the difference can be calculated...
-        if(keynum+1 < replay_sorted_files_keys.size()){
-            Long version2 = replay_sorted_files_keys.get(keynum+1);
+        if(keynum+1 < replay_sorted_articles_keys.size()){
+            Long version2 = replay_sorted_articles_keys.get(keynum+1);
             Long diff = version2-version1;
 
             diff = diff/this.speedup;
@@ -957,7 +958,7 @@ public class File_CoreWorkload extends Workload {
         //This function receives the key name and based on the ammount of versions for that key, computes a random index.
         //The index is then used to return the corresponding value from the version list.
         Long version;
-        List<Long> versions = kvalues.get(keyname);
+        List<Long> versions = articles_to_revisions_list.get(keyname);
         
         //int random = (int) Math.random() * versions.size();
         Random r = new Random();
@@ -1023,11 +1024,11 @@ public class File_CoreWorkload extends Workload {
     }
 
     public int getDumpSize(){
-        return files_keys.size();
+        return articles_keys.size();
     }
 
     public int getReplaySize(){
-        return replay_sorted_files_keys.size();
+        return replay_sorted_articles_keys.size();
     }
     
 

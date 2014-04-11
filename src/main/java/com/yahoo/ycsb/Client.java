@@ -757,28 +757,7 @@ public class Client
 		}
 		System.out.println();
 		System.err.println("Loading workload...");
-		
-		//show a warning message that creating the workload is taking a while
-		//but only do so if it is taking longer than 2 seconds 
-		//(showing the message right away if the setup wasn't taking very long was confusing people)
-		Thread warningthread=new Thread() 
-		{
-			public void run()
-			{
-				try
-				{
-					sleep(2000);
-				}
-				catch (InterruptedException e)
-				{
-					return;
-				}
-				System.err.println(" (might take a few minutes for large data sets)");
-			}
-		};
 
-		warningthread.start();
-		
 		//set up measurements
 		Measurements.setProperties(props);
 		
@@ -811,8 +790,6 @@ public class Client
 			System.exit(0);
 		}
 		
-		warningthread.interrupt();
-
 		//run the workload
 
 		System.err.println("Starting test.");

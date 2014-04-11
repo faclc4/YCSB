@@ -76,7 +76,7 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
 
     }
 
-    public HashMap<String, List<Long>> readArticles(InputStream stream) throws Exception {
+    public HashMap<String, List<Long>> readDump(InputStream stream) throws Exception {
         FSTObjectInput in = new FSTObjectInput(stream);
         @SuppressWarnings("unchecked")
         HashMap<String, List<Long>> result = (HashMap<String, List<Long>>)in.readObject();
