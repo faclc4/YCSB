@@ -102,21 +102,21 @@ do
 	stdOverhead=`echo "sqrt((${stdAfterLoad})^2 - (${stdgBeforeLoad})^2)/(10^6)" | bc`
 	echo "Overhead is: ${avrgOverhead}MB  (std=${stdOverhead}MB)"    
 
-        # echo "7. Running experiments on ${wiki} Wiki"
-        # rm -f tmp7-*
-	# for thread in ${threads}
-	# do
-    	#     echo "Using  ${thread} threads"
-    	#     CMD="${YCSB_DIR}/bin/ycsb.sh com.yahoo.ycsb.Client -t -s -replay -threads ${thread} -db com.yahoo.ycsb.InfinispanGlue -p servers=\"${servers}\" -p keys_file=${WIKI_DIR}/${wiki}.dat  -p replay_keys_file=${WIKI_DIR}/${wiki}.tr -P ${YCSB_DIR}/file_workloads/workload_1 -p oldid_file=${WIKI_DIR}/${wiki}.rev -p versioningTechnique=${versioningTechnique} -p debug=false -p clear=false"
-    	#     let e=${#clients[@]}-1
-    	#     for i in `seq 0 $e`
-    	#     do
-    	# 	${SSHCMDNODE} ubuntu@${clients[$i]} ${CMD} &> tmp7-${thread} &
-    	#     done
-    	#     wait
-    	#     grep -i "AverageLatency(ms)" tmp7-${thread}
-    	#     grep -i "Throughput" tmp7-${thread}
-	# done
+        echo "7. Running experiments on ${wiki} Wiki"
+        rm -f tmp7-*
+	for thread in ${threads}
+	do
+    	    echo "Using  ${thread} threads"
+    	    CMD="${YCSB_DIR}/bin/ycsb.sh com.yahoo.ycsb.Client -t -s -replay -threads ${thread} -db com.yahoo.ycsb.InfinispanGlue -p servers=\"${servers}\" -p keys_file=${WIKI_DIR}/${wiki}.dat  -p replay_keys_file=${WIKI_DIR}/${wiki}.tr -P ${YCSB_DIR}/file_workloads/workload_1 -p oldid_file=${WIKI_DIR}/${wiki}.rev -p versioningTechnique=${versioningTechnique} -p debug=false -p clear=false"
+    	    let e=${#clients[@]}-1
+    	    for i in `seq 0 $e`
+    	    do
+    		${SSHCMDNODE} ubuntu@${clients[$i]} ${CMD} &> tmp7-${thread} &
+    	    done
+    	    wait
+    	    grep -i "AverageLatency(ms)" tmp7-${thread}
+    	    grep -i "Throughput" tmp7-${thread}
+	done
 	
     done
 
