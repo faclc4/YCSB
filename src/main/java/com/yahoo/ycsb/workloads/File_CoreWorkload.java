@@ -635,34 +635,41 @@ public class File_CoreWorkload extends Workload {
                 String [] aux = line.split("\\s");
                 String param = aux[1].replace(".","");
                 Long ts = Long.parseLong(param);
-                
-                if(aux[2].startsWith("http://en.wikipedia.org/wiki/")){
-                    String url = aux[2].replace("http://en.wikipedia.org/wiki/", "");
+
+                if(aux[2].matches(".*org/wiki/.*")){
+                    String url = aux[2].replaceFirst(".*org/wiki/", "");
                     Map vals = new HashMap();
                     vals.put(url, null);
                     replay_sortedkvales.put(ts, vals);
-                }
-                if(aux[2].startsWith("http://en.wikipedia.org/w/")){// && aux[2].contains("oldid=")
-                    String url = aux[2].replace("http://en.wikipedia.org/w/index.php?", "");
+                } else if(aux[2].matches(".*org/w/.*")){
+                    String url = aux[2].replaceFirst(".*org/w/index\\.php\\?", "");
                     String stringsplit[] = url.split("\\&");
                     
                     String url_final="";
                     Long revId = null;
                     boolean history=false;
-                    
-                    for(String item : stringsplit){
-                        if(item.startsWith("title=")){
-                            if(item.replace("title=", "")!= null)
-                                url_final = item.replace("title=","");
+
+                    try{
+                        for(String item : stringsplit){
+                            if(item.startsWith("title=")){
+                                if(item.replace("title=", "")!= null)
+                                    url_final = item.replace("title=","");
+                            }
+                            if(item.startsWith("oldid=")){
+                                if(item.replace("oldid=", "")!= null){
+                                    revId = Long.parseLong(item.replace("oldid=", ""));
+                                }
+                            }
+                            if(item.startsWith("action=history")){
+                                history=true;
+                            }
                         }
-                        if(item.startsWith("oldid=")){
-                            if(item.replace("oldid=", "")!= null)
-                                revId = Long.parseLong(item.replace("oldid=", ""));
-                        }
-                        if(item.startsWith("action=history")){
-                            history=true;
-                        }
+                    }catch (NumberFormatException e){
+                        e.printStackTrace();
+                        System.out.println(url);
+                        continue;
                     }
+
                     if(!history){
                         Map vals = new HashMap();
                         vals.put(url_final, revisions_timestamps.get(revId));
@@ -680,7 +687,7 @@ public class File_CoreWorkload extends Workload {
                 replay_sorted_articles_keys.add(v);
             }
         } catch (IOException ex) {
-            Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+            throw new RuntimeException("Unable to read replay log");
         }
         System.out.println("done");
     }
