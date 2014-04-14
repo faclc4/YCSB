@@ -2,7 +2,7 @@
 
 source configuration.sh
 
-SCPCMDNODE="scp -i id_rsa"
+SCPCMDNODE="scp"
 
 function listIP(){
     keyword=$1
@@ -22,5 +22,7 @@ servers=(`listIP "multiversion-se" "psutra"`)
 let e=${#servers[@]}-1
 for i in `seq 0 $e`
 do
-    ${SCPCMDNODE} ~/ispn.jar root@${servers[$i]}:/opt/infinispan/ispn.jar
+    ${SCPCMDNODE} ~/ispn.jar root@${servers[$i]}:/opt/infinispan/ispn.jar &
 done
+wait
+
