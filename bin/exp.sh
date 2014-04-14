@@ -31,8 +31,8 @@ servers=(`listIP "multiversion-se" "psutra"`)
 clients=(`listIP "multiversion-cl" "psutra"`) 
 
 wikis="scn" # en ja (simple se)
-versioningTechniques="DUMMY" # ATOMICMAP TREEMAP" 
-threads="25 50 75 100"
+versioningTechniques="DUMMY TREEMAP" 
+threads="" # 25 50 75 100
 
 for wiki in ${wikis} 
 do
@@ -111,7 +111,7 @@ do
     	wait
     	avrgAfterLoad=`${lua} stats.lua tmp6 | cut -f 1`
     	stdAfterLoad=`${lua} stats.lua tmp6 | tr -s " " | cut -f 2`    
-    	echo ${avrgAfterLoad} ${stdgAfterLoad}
+    	echo ${avrgAfterLoad} ${stdAfterLoad}
 
     	echo "7. Storage cost"
     	avrgOverhead=`echo "(${avrgAfterLoad} - ${avrgBeforeLoad})/(10^6)" | bc`
