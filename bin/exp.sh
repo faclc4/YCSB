@@ -32,7 +32,7 @@ clients=(`listIP "multiversion-cl" "psutra"`)
 
 wikis="scn" # en ja (simple se)
 versioningTechniques="DUMMY TREEMAP" 
-threads="" # 25 50 75 100
+threads="10 25 50" # 75 100
 
 for wiki in ${wikis} 
 do
