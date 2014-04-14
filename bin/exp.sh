@@ -30,8 +30,8 @@ function listIP(){
 servers=(`listIP "multiversion-se" "psutra"`) 
 clients=(`listIP "multiversion-cl" "psutra"`) 
 
-wikis="scn simple jap" # scn se
-versioningTechniques="DUMMY ATOMICMAP TREEMAP" 
+wikis="scn" # en ja (simple se)
+versioningTechniques="DUMMY" # ATOMICMAP TREEMAP" 
 threads="25 50 75 100"
 
 for wiki in ${wikis} 
@@ -61,51 +61,46 @@ do
 	wait
 	sleep 20
 
-	echo "3. Computing storage usage (before)"
-	rm -f tmp3
-	let e=${#servers[@]}-1
-	for i in `seq 0 $e`
-	do
+    	echo "3. Computing storage usage (before)"
+    	rm -f tmp3
+    	let e=${#servers[@]}-1
+    	for i in `seq 0 $e`
+    	do
     	    ${SSHCMDNODE} ${servers[$i]} "ps -ef|grep java | grep -v grep | tr -s \" \" | cut -d \" \" -f 2 | awk '{print \"/opt/oracle-jdk-bin-1.7.0.45/bin/jcmd \"\$0\" GC.class_histogram\" }' | sh 2>&1 | egrep ^Total | tr -s \" \"| cut -d \" \" -f 3" >> tmp3 &
-	done
-	wait
-	avrgBeforeLoad=`${lua} stats.lua tmp3 | cut -f 1`
-	stdgBeforeLoad=`${lua} stats.lua tmp3 | tr -s " " | cut -f 2`
-	echo ${avrgBeforeLoad} ${stdgBeforeLoad}
+    	done
+    	wait
+    	avrgBeforeLoad=`${lua} stats.lua tmp3 | cut -f 1`
+    	stdgBeforeLoad=`${lua} stats.lua tmp3 | tr -s " " | cut -f 2`
+    	echo ${avrgBeforeLoad} ${stdgBeforeLoad}
 
-	echo "4. Populating instances"
-	rm -f tmp4
-	CMD="${YCSB_DIR}/bin/ycsb.sh com.yahoo.ycsb.Client -s -load -threads 20 -db com.yahoo.ycsb.InfinispanGlue -p servers=\"${servers[@]}\" -p keys_file=${WIKI_DIR}/${wiki}.dat  -p replay_keys_file=${WIKI_DIR}/${wiki}.tr -P ${YCSB_DIR}/file_workloads/workload_1 -p oldid_file=${WIKI_DIR}/${wiki}.rev -p versioningTechnique=${versioningTechnique} -p debug=false -p clear=false"
-	let e=${#clients[@]}-1
-	for i in `seq 0 $e`
-	do
+    	echo "4. Populating instances"
+    	rm -f tmp4
+    	CMD="${YCSB_DIR}/bin/ycsb.sh com.yahoo.ycsb.Client -s -load -threads 20 -db com.yahoo.ycsb.InfinispanGlue -p servers=\"${servers[@]}\" -p keys_file=${WIKI_DIR}/${wiki}.dat  -p replay_keys_file=${WIKI_DIR}/${wiki}.tr -P ${YCSB_DIR}/file_workloads/workload_1 -p oldid_file=${WIKI_DIR}/${wiki}.rev -p versioningTechnique=${versioningTechnique} -p debug=false -p clear=false"
+    	let e=${#clients[@]}-1
+    	for i in `seq 0 $e`
+    	do
     	    ${SSHCMDNODE} ubuntu@${clients[$i]} ${CMD} &> tmp4 &
-	done
-	wait
-	grep RunTime tmp4    
-	sleep 20
+    	done
+    	wait
+    	grep RunTime tmp4    
+    	sleep 20
 	
-	echo "5. Computing storage usage (after)"
-	rm -f tmp5
-	let e=${#servers[@]}-1
-	for i in `seq 0 $e`
-	do
+    	echo "5. Computing storage usage (after)"
+    	rm -f tmp5
+    	let e=${#servers[@]}-1
+    	for i in `seq 0 $e`
+    	do
     	    ${SSHCMDNODE} ${servers[$i]} "ps -ef|grep java | grep -v grep | tr -s \" \" | cut -d \" \" -f 2 | awk '{print \"/opt/oracle-jdk-bin-1.7.0.45/bin/jcmd \"\$0\" GC.class_histogram\" }' | sh 2>&1 | egrep ^Total | tr -s \" \"| cut -d \" \" -f 3" >> tmp5 &
-	done
-	wait
-	avrgAfterLoad=`${lua} stats.lua tmp5 | cut -f 1`
-	stdAfterLoad=`${lua} stats.lua tmp5 | tr -s " " | cut -f 2`    
-	echo ${avrgAfterLoad} ${stdgAfterLoad}
+    	done
+    	wait
+    	avrgAfterLoad=`${lua} stats.lua tmp5 | cut -f 1`
+    	stdAfterLoad=`${lua} stats.lua tmp5 | tr -s " " | cut -f 2`    
+    	echo ${avrgAfterLoad} ${stdgAfterLoad}
 
-	echo "6. Computing overhead "
-	avrgOverhead=`echo "(${avrgAfterLoad} - ${avrgBeforeLoad})/(10^6)" | bc`
-	stdOverhead=`echo "sqrt((${stdAfterLoad})^2 - (${stdgBeforeLoad})^2)/(10^6)" | bc`
-	echo "Overhead is: ${avrgOverhead}MB  (std=${stdOverhead}MB)"    
-
-        echo "7. Running experiments on ${wiki} Wiki"
+        echo "6. Running experiments on ${wiki} Wiki"
         rm -f tmp7-*
-	for thread in ${threads}
-	do
+    	for thread in ${threads}
+    	do
     	    echo "Using  ${thread} threads"
     	    CMD="${YCSB_DIR}/bin/ycsb.sh com.yahoo.ycsb.Client -t -s -replay -threads ${thread} -db com.yahoo.ycsb.InfinispanGlue -p servers=\"${servers}\" -p keys_file=${WIKI_DIR}/${wiki}.dat  -p replay_keys_file=${WIKI_DIR}/${wiki}.tr -P ${YCSB_DIR}/file_workloads/workload_1 -p oldid_file=${WIKI_DIR}/${wiki}.rev -p versioningTechnique=${versioningTechnique} -p debug=false -p clear=false"
     	    let e=${#clients[@]}-1
@@ -116,7 +111,12 @@ do
     	    wait
     	    grep -i "AverageLatency(ms)" tmp7-${thread}
     	    grep -i "Throughput" tmp7-${thread}
-	done
+    	done
+
+    	echo "7. Computing overhead "
+    	avrgOverhead=`echo "(${avrgAfterLoad} - ${avrgBeforeLoad})/(10^6)" | bc`
+    	stdOverhead=`echo "sqrt((${stdAfterLoad})^2 - (${stdgBeforeLoad})^2)/(10^6)" | bc`
+    	echo "Overhead is: ${avrgOverhead}MB  (std=${stdOverhead}MB)"    
 	
     done
 
