@@ -532,15 +532,9 @@ public class File_CoreWorkload extends Workload {
         }
 
         if (keys_file_path != null && replay_file_path != null) {
-            if(load){
-                readDump(keys_file_path);
-            }
-            else{
-            
+            readDump(keys_file_path);
             readRevisions(oldIds_file_path);
-            
             readReplayLog(replay_file_path);
-            }
         }
 
         if (redis_database_info != null) {
@@ -744,26 +738,9 @@ public class File_CoreWorkload extends Workload {
     }
 
     public String fetchKeyName(long keynum,Object thread_state) {
-
-        //ClientThreadState state = (ClientThreadState) thread_state;
-        //Jedis redis_client  = state.getRedis_connection();
-
         String key = "";
-
-        if(KEY_INPUT_SOURCE==REDIS_INPUT){
-
-        //    key = redis_client.get(keynum+"");
-
-            if(key ==null){
-                System.out.println("Null on key: "+Long.toString(keynum));
-            }
-
-        }else{
-            key = String.valueOf(articles_keys.get(((int) keynum) % articles_keys.size()));
-        }
-
+        key = String.valueOf(articles_keys.get(((int) keynum) % articles_keys.size()));
         return key;
-
     }
     
     

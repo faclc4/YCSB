@@ -31,27 +31,25 @@ public class InfinispanGlue extends DB {
     debug =super._p.getProperty("debug", "false").equals("true");
 
     Random rand = new Random(System.nanoTime());
-    String server = serverList.split(" ")[rand.nextInt(serverList.split(" ").length)];
 
     System.out.println("Versioning technique = "+versioningTechnique);
     System.out.println("RMI Servers = "+serverList);
 
-      try{
-      String serviceURL = "//" + server + "/"	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"	+ versioningTechnique;
-      if(debug) System.out.print("Connecting to " + serviceURL + " ... ");
-      this.cache = (RemoteVersionedCache<String, String>) Naming.lookup(serviceURL);
-      if(debug) System.out.println("[\u001b[1;44m OK \u001b[m]");
-
-
-      if(super._p.getProperty("clear","false").equals("true")){
-          System.out.print("Clearing cache ... ");
-          this.cache.clear();
-          System.out.println("[\u001b[1;44m OK \u001b[m]");
-      }
-
-    }catch(Exception e){
-      e.printStackTrace();
-      throw new RuntimeException();
+    while(this.cache==null){
+        String server = serverList.split(" ")[rand.nextInt(serverList.split(" ").length)];
+        String serviceURL = "//" + server + "/"	+ RemoteVersionedCacheImpl.SERVICE_NAME + "-"	+ versioningTechnique;
+        try{
+            if(debug) System.out.print("Connecting to " + serviceURL + " ... ");
+            this.cache = (RemoteVersionedCache<String, String>) Naming.lookup(serviceURL);
+            if(debug) System.out.println("[\u001b[1;44m OK \u001b[m]");
+            if(super._p.getProperty("clear","false").equals("true")){
+                System.out.print("Clearing cache ... ");
+                this.cache.clear();
+                System.out.println("[\u001b[1;44m OK \u001b[m]");
+            }
+        }catch(Exception e){
+            System.out.println("Fail to connect to "+server);
+        }
     }
 
   }
@@ -86,8 +84,8 @@ public class InfinispanGlue extends DB {
     Version vB = this.vsg.increment(versionB);
     try{
         if(debug) System.out.println(key+" (R "+vA.toString()+","+vB.toString()+") => ");
-        Collection<String> values = cache.get(key, vA, vB);
-        if(debug) System.out.println(values);
+        Collection<Version> versions = cache.get(key, vA, vB);
+        if(debug) System.out.println(versions);
     } catch (RemoteException re) {
       re.printStackTrace();
       return ERROR;
@@ -125,13 +123,12 @@ public class InfinispanGlue extends DB {
     public int insert(String table, String key, HashMap<Version, ByteIterator> map) {
       Map<Version, String> m = StringByteIterator.getVersionStringMap(map);
       if (debug) System.out.println(key+" (I) => " + m);
-    try {
-        this.cache.putAll(key,m);
-    } catch (RemoteException e) {
-        e.printStackTrace();
-        return ERROR;
-    }
-
+      try {
+          this.cache.putAll(key,m);
+      } catch (RemoteException e) {
+          e.printStackTrace();
+          return ERROR;
+      }
       return OK;
   }
 
