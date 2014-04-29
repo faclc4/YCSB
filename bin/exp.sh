@@ -27,8 +27,8 @@ function listIP(){
     echo ${ips[@]}
 }
 
-servers=(`listIP "multiversion-se" "psutra"`) 
-clients=(`listIP "multiversion-cl" "psutra"`) 
+servers=(`listIP "multiversion-se" "${USER}"`) 
+clients=(`listIP "multiversion-cl" "${USER}"`) 
 
 wikis="scn" # en ja (simple se)
 versioningTechniques="DUMMY TREEMAP" 

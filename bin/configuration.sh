@@ -11,5 +11,10 @@ ID_DATASTORE="100"
 SSHCMDHEAD="ssh -l ${USER} ${CLUSTER} ONE_AUTH=${ONE_AUTH_FILE}"
 SSHCMDNODE="ssh -l root -i id_rsa"
 
+VM_SERVER="multiversion-cl"
+VM_CLIENT="multiversion-se"
+VM_USER="psutra"
+
 bc=`which bc`
 lua=`which lua`
+
