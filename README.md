@@ -59,10 +59,10 @@ To configure workload modify the workload file:
   Multiple clients: Add **-threads N** do the previous commands. N: number of clients
 
 ====
-Infinispan Cluster operations
+**Infinispan Cluster operations**
 
-The bin folder script contains exp.sh, a helper to run YCSB in an Infinispan cluster environement supporting the OpenNebula IaaS.
-We configure it with bin/configuration.sh.
+The bin folder contains exp.sh, a helper to run YCSB in a distributed environment supporting the OpenNebula IaaS.
+To configure it, we use the configuration.sh file.
 In what follows, we first detail the content of configuration.sh then explain how to make use of exp.sh.
 
 * Configuration 
@@ -79,8 +79,8 @@ wikis="scn" # en ja (simple se)
 versioningTechniques="DUMMY TREEMAP" 
 threads="10 25 50" # 75 100
 ```
-An experiments consist in loading Infinispan with the appropriate versioning technique, executing a replay of the trace with a varying number of threads and computing the average and standard dev. of the storage cost. 
-Each of this step output appropriate information to the console.
+An experiment consists in loading Infinispan with the appropriate versioning technique, executing a replay of the trace with a varying number of threads and computing the average and standard dev. of the storage cost. 
+Each of this step outputs appropriate information to the console.
 As a consequence, a convenient way to launch exp.sh is as follows:
 ```bash
 nohup bin/exp.sh 2>&1 > results&
