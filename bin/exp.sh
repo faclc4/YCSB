@@ -115,7 +115,7 @@ do
 
     	echo "7. Storage cost"
     	avrgOverhead=`echo "(${avrgAfterLoad} - ${avrgBeforeLoad})/(10^6)" | bc`
-    	stdOverhead=`echo "sqrt((${stdAfterLoad})^2 - (${stdgBeforeLoad})^2)/(10^6)" | bc`
+    	stdOverhead=`echo "sqrt((${stdAfterLoad})^2 + (${stdgBeforeLoad})^2)/(10^6)" | bc`
     	echo "Storage cost is: ${avrgOverhead}MB  (std=${stdOverhead}MB)"    
 	
     done
