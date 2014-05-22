@@ -92,6 +92,15 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
         return result;
     }
 
+    public HashMap<Long,Long> readSizes(InputStream stream) throws Exception {
+        FSTObjectInput in = new FSTObjectInput(stream);
+        @SuppressWarnings("unchecked")
+        HashMap<Long,Long> result = (HashMap<Long,Long>)in.readObject();
+        in.close(); // required !
+        return result;
+    }
+
+
     public void writeData( OutputStream stream, HashMap<String, List<Long>> data) throws Exception {
         FSTObjectOutput out = new FSTObjectOutput(stream);
         out.writeObject( data );
