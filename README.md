@@ -34,7 +34,7 @@ To configure workload modify the workload file:
 **To LOAD data run:**
 
 ```bash
-  ./bin/ycsb.sh com.yahoo.ycsb.Client -load -db com.yahoo.ycsb.InfinispanGlue -p keys_file=file_workloads/en-wiki.dat -p replay_keys_file=file_workloads/en-wiki.tr -p oldid_file=file_workloads/en-dump.rev sizes_file=file_workloads/en.sizes -P file_workloads/workload_1
+  ./bin/ycsb.sh com.yahoo.ycsb.Client -load -db com.yahoo.ycsb.InfinispanGlue -p keys_file=file_workloads/en-wiki.dat -p replay_keys_file=file_workloads/en-wiki.tr -p oldid_file=file_workloads/en-dump.rev sizes_file=file_workloads/en-dump.size -P file_workloads/workload_1
 ```  
   
   This command will load data according to the Wikipedia dump, as fast as possible.
