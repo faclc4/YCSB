@@ -816,10 +816,9 @@ public class File_CoreWorkload extends Workload {
         int keynum = keysequence.nextInt();
 	Long version1 = sorted_articles_keys.get(keynum);
 	String db_key = String.valueOf(revisions_to_articles.get(version1));
-        //Long size = version_sizes.get(version1);
+        Long size = version_sizes.get(version1);
 
-	//ByteIterator data = new RandomByteIterator(size);
-	ByteIterator data = new RandomByteIterator(10L);
+	ByteIterator data = new RandomByteIterator(size);
 
         HashMap<Version,ByteIterator> value = new HashMap<Version,ByteIterator>();
         value.put(new VersionScalar(version1), data);
@@ -836,10 +835,9 @@ public class File_CoreWorkload extends Workload {
         int keynum = keysequence.nextInt();
         Long version1 = sorted_articles_keys.get(keynum);
         String db_key = String.valueOf(revisions_to_articles.get(version1));
-	//Long size = version_sizes.get(version1);
+	Long size = version_sizes.get(version1);
         
-        //ByteIterator data = new RandomByteIterator(size);
-	ByteIterator data = new RandomByteIterator(10L);
+        ByteIterator data = new RandomByteIterator(size);
         
         HashMap<Version,ByteIterator> value = new HashMap<Version,ByteIterator>();
         value.put(new VersionScalar(version1), data);
