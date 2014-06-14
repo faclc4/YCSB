@@ -631,7 +631,6 @@ public class File_CoreWorkload extends Workload {
             } catch (Exception ex) {
                 Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
             }
-        System.out.print(" size: "+ articles_to_revisions_list.size());
         System.out.println("... done");
     }
 
