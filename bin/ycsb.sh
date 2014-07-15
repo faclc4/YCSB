@@ -113,7 +113,7 @@ for f in $YCSB_HOME/db/*; do
   fi
 done
 
-#echo "CLASSPATH=$CLASSPATH"
+echo "CLASSPATH=$CLASSPATH"
 
 # restore ordinary behavior
 unset IFS

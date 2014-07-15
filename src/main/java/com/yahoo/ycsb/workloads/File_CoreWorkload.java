@@ -175,18 +175,18 @@ public class File_CoreWorkload extends Workload {
      * The name of the property for the proportion of transactions that are scans.
      */
     public static final String SCAN_PROPORTION_PROPERTY = "scanproportion";
-    
-        /**
+
+    /**
      * The name of the property for the proportion of transactions that are scans.
      */
     public static final String READRANGE_PROPORTION_PROPERTY = "readrangeproportion";
-    
+
     public static final String SPEEDUP_PROPERTY = "speedup";
-    
+
     public static final String SPEEDUP_PROPERTY_DEFAULT = "1.0";
 
     public static final String K_PROPERTY = "k";
-    
+
     public static final String K_PROPERTY_DEFAULT = "1";
 
     /**
@@ -273,7 +273,7 @@ public class File_CoreWorkload extends Workload {
      * The input file for keys
      */
     public static final String KEYS_FILE_PROPERTY = "keys_file";
-    
+
     public static final String REPLAY_FILE_PROPERTY = "replay_keys_file";
 
     public static final String OLDID_FILE_PROPERTY = "oldid_file";
@@ -321,16 +321,16 @@ public class File_CoreWorkload extends Workload {
      * The number of scans to be executed.
      */
     public static final String SCANS_TO_EXECUTE_PROPERTY = "scans_executed";
-    
+
     /**
      * The default interval between scans.
      */
     public static final String SCAN_DELAY_DEFAULT_PROPERTY = "0";
 
     public static int scan_delay;
-    
+
     public static int number_of_scans;
-   
+
     public static int executed_scans = 0;
 
     public static long last_scan;
@@ -345,23 +345,17 @@ public class File_CoreWorkload extends Workload {
 
     public static boolean KEY_INPUT_SOURCE = FILE_INPUT;
 
-    public static ArrayList<String> articles_keys;
-    
-    public static ArrayList<Long> sorted_articles_keys;
-    
-    public static ArrayList<Long> replay_sorted_articles_keys;
-    
-    public static Map<String,List<Long>> articles_to_revisions_list;
-    
-    public static Map<String,Long> revisions_timestamps;
-    
+    public static ArrayList<String> articles;
+    public static ArrayList<Long> sorted_articles_revisions;
+    public static Map<String,List<Long>> articles_to_revisions;
     public Map<Long,String> revisions_to_articles;
-    
-    public Map<Long,Map<String,Long>> replay_sortedkvales;
+    public static Map<String,Long> revisions_timestamps;
+
+    public static ArrayList<Long> replay_sorted_entries_keys;
+    public Map<Long,Map<String,Long>> replay_entries;
 
     public Map<Long,Long> version_sizes;
-   
-    public Map<String,Integer> times_read;
+
 
     public static String redis_connection_info;
 
@@ -386,7 +380,7 @@ public class File_CoreWorkload extends Workload {
     boolean orderedinserts;
 
     int recordcount;
-    
+
     Long speedup;
 
     //the number of times a given key is allowed to be read.
@@ -428,7 +422,7 @@ public class File_CoreWorkload extends Workload {
         boolean load = Boolean.parseBoolean(p.getProperty("load"));
         double readproportion = Double.parseDouble(p.getProperty(READ_PROPORTION_PROPERTY, READ_PROPORTION_PROPERTY_DEFAULT));
         speedup = Long.parseLong(p.getProperty(SPEEDUP_PROPERTY, SPEEDUP_PROPERTY_DEFAULT));
-	k = Integer.parseInt(p.getProperty(K_PROPERTY,K_PROPERTY_DEFAULT));
+        k = Integer.parseInt(p.getProperty(K_PROPERTY,K_PROPERTY_DEFAULT));
         double readrangeproportion = Double.parseDouble(p.getProperty(READRANGE_PROPORTION_PROPERTY, READRANGE_PROPORTION_PROPERTY_DEFAULT));
         double updateproportion = Double.parseDouble(p.getProperty(UPDATE_PROPORTION_PROPERTY, UPDATE_PROPORTION_PROPERTY_DEFAULT));
         double insertproportion = Double.parseDouble(p.getProperty(INSERT_PROPORTION_PROPERTY, INSERT_PROPORTION_PROPERTY_DEFAULT));
@@ -461,7 +455,7 @@ public class File_CoreWorkload extends Workload {
         if (readproportion > 0) {
             operationchooser.addValue(readproportion, "READ");
         }
-        
+
         if (readrangeproportion > 0) {
             operationchooser.addValue(readrangeproportion, "READRANGE");
         }
@@ -522,29 +516,27 @@ public class File_CoreWorkload extends Workload {
 
         use_file_columns = Boolean.parseBoolean(p.getProperty(USE_FILE_COLUMNS_PROPERTY, USE_FILE_COLUMNS_DEFAULT_PROPERTY));
 
-        articles_keys = new ArrayList<String>();
-        
-        sorted_articles_keys = new ArrayList<Long>();
-        
-        replay_sorted_articles_keys = new ArrayList<Long>();
-        
-        articles_to_revisions_list = new HashMap<String,List<Long>>();
-        
-        revisions_timestamps = new HashMap<String,Long>();
-        
-        revisions_to_articles = new TreeMap<Long,String>();
-        
-        replay_sortedkvales = new TreeMap<Long,Map<String,Long>>();
+        articles = new ArrayList<String>();
 
-	version_sizes = new TreeMap<Long,Long>();
-        
-        times_read = new HashMap<String,Integer>();
+        sorted_articles_revisions = new ArrayList<Long>();
+
+        replay_sorted_entries_keys = new ArrayList<Long>();
+
+        articles_to_revisions = new HashMap<String,List<Long>>();
+
+        revisions_timestamps = new HashMap<String,Long>();
+
+        revisions_to_articles = new TreeMap<Long,String>();
+
+        replay_entries = new TreeMap<Long,Map<String,Long>>();
+
+        version_sizes = new TreeMap<Long,Long>();
 
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
         String replay_file_path = p.getProperty(REPLAY_FILE_PROPERTY);
         String redis_database_info = p.getProperty(REDIS_DATABASE_PROPERTY);
         String oldIds_file_path = p.getProperty(OLDID_FILE_PROPERTY);
-	String sizes_file_path = p.getProperty(SIZES_FILE_PROPERTY);
+        String sizes_file_path = p.getProperty(SIZES_FILE_PROPERTY);
 
 
         if (keys_file_path == null && redis_database_info == null) {
@@ -552,11 +544,20 @@ public class File_CoreWorkload extends Workload {
                     "or a redis database with \"redis_database\" ");
         }
 
-        if (keys_file_path != null && replay_file_path != null && oldIds_file_path != null && sizes_file_path != null) {
-            readDump(keys_file_path);
-            readRevisions(oldIds_file_path);
-            readReplayLog(replay_file_path);
-	    importSizes(sizes_file_path);
+        boolean ok=false;
+        try{
+            if (keys_file_path != null && replay_file_path != null && oldIds_file_path != null && sizes_file_path != null) {
+                readDump(keys_file_path);
+                readRevisions(oldIds_file_path);
+                readReplayLog(replay_file_path);
+                importSizes(sizes_file_path);
+                ok=true;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if (!ok)
+                throw new RuntimeException("Invalid command line; missing files.");
         }
 
         if (redis_database_info != null) {
@@ -598,69 +599,58 @@ public class File_CoreWorkload extends Workload {
         }
 
         scan_lock = new ReentrantLock();
-        
-        
+
+
         scan_delay = Integer.parseInt(p.getProperty(SCAN_DELAY_PROPERTY,SCAN_DELAY_DEFAULT_PROPERTY));
         number_of_scans = Integer.parseInt(p.getProperty(SCANS_TO_EXECUTE_PROPERTY,"-1"));
 
         last_scan = System.currentTimeMillis();
-        
+
     }
 
     public void readDump(String keys_file_path){
         System.out.print("Reading dump ... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
-            try {
-                articles_to_revisions_list = handler.readDump(new FileInputStream(keys_file_path));
-
-                System.out.print(articles_to_revisions_list.size() + " articles, ");
-                
-                for(String key : articles_to_revisions_list.keySet()){
-                    articles_keys.add(key);
-                    for(Long version : articles_to_revisions_list.get(key)){
-                        revisions_to_articles.put(version, key);
-                    }
-                }
-
-                System.out.print(revisions_to_articles.size() + " revisions");
-                
-                for(Long v : revisions_to_articles.keySet()){
-                    sorted_articles_keys.add(v);
-                }
-                
-            } catch (Exception ex) {
-                Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        System.out.println("... done");
-    }
-
-    public void importSizes(String sizes_file_path){
         try {
-            System.out.print("Importing sizes ... ");
-            CompressedDumpParser handler = new CompressedDumpParser();
-            
-            version_sizes = handler.readSizes(new FileInputStream(sizes_file_path));
-            
+            articles_to_revisions = handler.readDump(new FileInputStream(keys_file_path));
+
+            System.out.print(articles_to_revisions.size() + " articles, ");
+
+            for(String key : articles_to_revisions.keySet()){
+                articles.add(key);
+                for(Long version : articles_to_revisions.get(key)){
+                    revisions_to_articles.put(version, key);
+                }
+            }
+
+            System.out.print(revisions_to_articles.size() + " revisions");
+
+            for(Long v : revisions_to_articles.keySet()){
+                sorted_articles_revisions.add(v);
+            }
+
         } catch (Exception ex) {
             Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
         }
+        System.out.println("... done");
+    }
+
+    public void importSizes(String sizes_file_path) throws Exception {
+        System.out.print("Importing sizes ... ");
+        CompressedDumpParser handler = new CompressedDumpParser();
+        version_sizes = handler.readSizes(new FileInputStream(sizes_file_path));
         System.out.print(" size: "+ version_sizes.size());
         System.out.println("... done");
     }
-    
-    public void readReplayLog(String replay_file_path){
+
+    public void readReplayLog(String replay_file_path) throws FileNotFoundException {
         System.out.print("Reading replay log ...");
         FileInputStream input_file_stream = null;
-        try {
-           input_file_stream = new FileInputStream(replay_file_path);
-        } catch (FileNotFoundException ex) {
-            Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        input_file_stream = new FileInputStream(replay_file_path);
+        BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
 
-            BufferedReader input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
-            
-            String line = "";
-        try {            
+        String line = "";
+        try {
             while ((line = input_reader.readLine()) != null) {
                 String [] aux = line.split("\\s");
                 String param = aux[1].replace(".","");
@@ -668,13 +658,16 @@ public class File_CoreWorkload extends Workload {
 
                 if(aux[2].matches(".*org/wiki/.*")){
                     String url = aux[2].replaceFirst(".*org/wiki/", "");
+                    if (!articles_to_revisions.keySet().contains(url)){
+                        url = articles.get(url.length()%articles.size());
+                    }
                     Map vals = new HashMap();
                     vals.put(url, null);
-                    replay_sortedkvales.put(ts, vals);
+                    replay_entries.put(ts, vals);
                 } else if(aux[2].matches(".*org/w/.*")){
                     String url = aux[2].replaceFirst(".*org/w/index\\.php\\?", "");
                     String stringsplit[] = url.split("\\&");
-                    
+
                     String url_final="";
                     Long revId = null;
                     boolean history=false;
@@ -700,28 +693,32 @@ public class File_CoreWorkload extends Workload {
                         continue;
                     }
 
+                    if (!articles_to_revisions.keySet().contains(url_final)){
+                        url_final = articles.get(url_final.length()%articles.size());
+                    }
+
                     if(!history){
                         Map vals = new HashMap();
                         vals.put(url_final, revisions_timestamps.get(revId));
-                        replay_sortedkvales.put(ts, vals);
+                        replay_entries.put(ts, vals);
                     }
                     else{
                         Map vals = new HashMap();
                         vals.put(url_final, 1L);
-                        replay_sortedkvales.put(ts, vals);
-                        
+                        replay_entries.put(ts, vals);
+
                     }
                 }
             }
-            for(Long v : replay_sortedkvales.keySet()){
-                replay_sorted_articles_keys.add(v);
+            for(Long v : replay_entries.keySet()){ // sorted for free by the replay log
+                replay_sorted_entries_keys.add(v);
             }
         } catch (IOException ex) {
             throw new RuntimeException("Unable to read replay log");
         }
         System.out.println("done");
     }
-    
+
     public void readRevisions(String oldId_file_path){
         System.out.print("Reading revisions... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
@@ -751,8 +748,8 @@ public class File_CoreWorkload extends Workload {
         }
 
         ClientThreadState clientThreadState = new ClientThreadState(redis_client,resultHandler);
-             
-     //   Pair<ResultHandler,Jedis> thread_state = new Pair<ResultHandler, Jedis>(resultHandler,redis_client);
+
+        //   Pair<ResultHandler,Jedis> thread_state = new Pair<ResultHandler, Jedis>(resultHandler,redis_client);
         return clientThreadState;
     }
 
@@ -775,15 +772,15 @@ public class File_CoreWorkload extends Workload {
 
     public String fetchKeyName(long keynum,Object thread_state) {
         String key = "";
-        key = String.valueOf(articles_keys.get(((int) keynum) % articles_keys.size()));
+        key = String.valueOf(articles.get(((int) keynum) % articles.size()));
         return key;
     }
-    
-    
+
+
     public HashMap<Version,ByteIterator> buildValues(String keyname) {
         HashMap<Version,ByteIterator> values = new HashMap<Version,ByteIterator>();
-        
-        List<Long> versions = articles_to_revisions_list.get(keyname);
+
+        List<Long> versions = articles_to_revisions.get(keyname);
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
@@ -795,8 +792,8 @@ public class File_CoreWorkload extends Workload {
     public HashMap<Version,ByteIterator> buildUpdate(String keyname) {
         //update a random field
         HashMap<Version,ByteIterator> values = new HashMap<Version,ByteIterator>();
-        
-        List<Long> versions = articles_to_revisions_list.get(keyname);
+
+        List<Long> versions = articles_to_revisions.get(keyname);
         Random r = new Random();
         int random = r.nextInt(versions.size());
 
@@ -812,43 +809,42 @@ public class File_CoreWorkload extends Workload {
      * effects other than DB operations.
      */
     public boolean doInsert(DB db, Object threadstate) {
-        int keynum = keysequence.nextInt();
-	Long version1 = sorted_articles_keys.get(keynum);
-	String db_key = String.valueOf(revisions_to_articles.get(version1));
-        Long size = version_sizes.get(version1);
+        String article = articles.get(keysequence.nextInt());
+        articles_to_revisions.get(article);
+        HashMap<Version,ByteIterator> content = new HashMap<>();
+        for( Long revision: articles_to_revisions.get(article)){
+            Long size = version_sizes.get(revision);
+            ByteIterator data = new RandomByteIterator(1);
+            content.put(new VersionScalar(revision), data);
+        }
 
-	ByteIterator data = new RandomByteIterator(size);
-
-        HashMap<Version,ByteIterator> value = new HashMap<Version,ByteIterator>();
-        value.put(new VersionScalar(version1), data);
-        
-        if (db.insert(table, db_key, value) == 0){
+        if (db.insert(table, article, content) == 0){
             return true;
         }
         else
             return false;
     }
-    
+
     public boolean doReplayInsert(DB db, Object threadstate) {
         //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
         int keynum = keysequence.nextInt();
-        Long version1 = sorted_articles_keys.get(keynum);
+        Long version1 = sorted_articles_revisions.get(keynum);
         String db_key = String.valueOf(revisions_to_articles.get(version1));
-	Long size = version_sizes.get(version1);
-        
+        Long size = version_sizes.get(version1);
+
         ByteIterator data = new RandomByteIterator(size);
-        
+
         HashMap<Version,ByteIterator> value = new HashMap<Version,ByteIterator>();
         value.put(new VersionScalar(version1), data);
-        
-        
+
+
         //if there is a next key so that the difference can be calculated...
-        if(keynum+1 < sorted_articles_keys.size()){
-            Long version2 = sorted_articles_keys.get(keynum+1);
+        if(keynum+1 < sorted_articles_revisions.size()){
+            Long version2 = sorted_articles_revisions.get(keynum+1);
             Long diff = version2-version1;
-            
+
             diff = diff/this.speedup;
-            
+
             if (db.insert(table, db_key, value) == 0){
                 try {
                     Thread.sleep(diff);
@@ -860,83 +856,74 @@ public class File_CoreWorkload extends Workload {
             else
                 return false;
         }
-        else{     
+        else{
             if (db.insert(table, db_key, value) == 0)
                 return true;
             else
                 return false;
         }
     }
-    
+
     public boolean doTransactionReplay(DB db, Object threadstate) {
-        //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
-        int keynum = keysequence.nextInt();
-        Long version1 = replay_sorted_articles_keys.get(keynum);
-        String db_key = "";
-        
-        ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt()); 
-        HashMap<Version,Object> value = new HashMap<Version,Object>();
-        
+
+        Map<String,Integer> last_read = new HashMap<>();
+
+        int next = keysequence.nextInt();
+
+        Long entry_key = replay_sorted_entries_keys.get(next);
+
+        ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
+
+        HashMap<Version,Object> value = new HashMap<>();
+
         boolean dorange=false;
-        
-        for(Map.Entry<String,Long> db_item : replay_sortedkvales.get(version1).entrySet()){
-            db_key = db_item.getKey();
-            if(db_item.getValue()!= null)
-                value.put(new VersionScalar(db_item.getValue()),data);
-            if(db_item.getValue()!= null && db_item.getValue() == 1L)
+
+        String article = "";
+
+        for(Map.Entry<String,Long> replay_entry : replay_entries.get(entry_key).entrySet()){
+            article = replay_entry.getKey();
+            if(replay_entry.getValue()!= null)
+                value.put(new VersionScalar(replay_entry.getValue()),data);
+            if(replay_entry.getValue()!= null && replay_entry.getValue() == 1L)
                 dorange=true;
             else
-                value.put(new VersionScalar(version1), data);
+                value.put(new VersionScalar(entry_key), data);
         }
+
+        assert !article.equals("");
 
         //if there is a next key so that the difference can be calculated...
-        if(keynum+1 < replay_sorted_articles_keys.size()){
-            Long version2 = replay_sorted_articles_keys.get(keynum+1);
-            Long diff = version2-version1;
-
+        if(next+1 < replay_sorted_entries_keys.size()){
+            Long next_entry_key = replay_sorted_entries_keys.get(next+1);
+            Long diff = next_entry_key-entry_key;
             diff = diff/this.speedup;
+            try {
+                Thread.sleep(diff);
+            } catch (InterruptedException ex) {
+                Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
 
-            if (!dorange && db.read(table, db_key) == 0){
-                try {
-                    Thread.sleep(diff);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-                }
-		if(times_read.containsKey(db_key))
-                    times_read.put(db_key, times_read.get(db_key)+1);
-                else 
-                    times_read.put(db_key, 1);
-                
-                return true;
+        if (!dorange && db.read(table, article) == 0){
+            if(last_read.containsKey(article)){
+                last_read.put(article, last_read.get(entry_key)+1);
+            }else{
+                last_read.put(article, 1);
             }
-            if (dorange && db.readRange(table, db_key, new VersionScalar(0),new VersionScalar(version1)) == 0){
-                try {
-                    Thread.sleep(diff);
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-                }
-		if(times_read.containsKey(db_key))
-                    times_read.put(db_key, times_read.get(db_key)+1);
-                else 
-                    times_read.put(db_key, 1);
-                return true;
+            return true;
+        }
+
+        if (dorange && db.readRange(table, article, new VersionScalar(0),new VersionScalar(entry_key)) == 0){
+            if(last_read.containsKey(article)){
+                last_read.put(article, last_read.get(article)+1);
+            }else{
+                last_read.put(article, 1);
             }
-            else
-                return false;
+            return true;
+        }else{
+            return false;
         }
-        else{
-            if (!dorange && db.read(table, db_key) == 0)
-                return true;
-            if (dorange && db.readRange(table, db_key, new VersionScalar(0) ,new VersionScalar(version1)) == 0){
-		if(times_read.containsKey(db_key))
-                    times_read.put(db_key, times_read.get(db_key)+1);
-                else 
-                    times_read.put(db_key, 1);
-                return true;
-	    }
-            else
-                return false;
-        }
+
     }
 
     /**
@@ -949,7 +936,7 @@ public class File_CoreWorkload extends Workload {
 
         ClientThreadState state = (ClientThreadState) threadstate;
         ResultHandler resultHandler = state.getClient_resultHandler();
-        
+
         String op = operationchooser.nextString();
 
         long init_transaction_time = System.currentTimeMillis();
@@ -965,7 +952,7 @@ public class File_CoreWorkload extends Workload {
             doTransactionInsert(db);
         } else if (op.compareTo("READRANGE") == 0) {
             this.doTransactionReadRange(db,threadstate);
-        } 
+        }
         else {
             doTransactionReadModifyWrite(db);
         }
@@ -995,17 +982,17 @@ public class File_CoreWorkload extends Workload {
         }
         return keynum;
     }
-    
+
     private Long nextVersion(String keyname) {
         //This function receives the key name and based on the ammount of versions for that key, computes a random index.
         //The index is then used to return the corresponding value from the version list.
         Long version;
-        List<Long> versions = articles_to_revisions_list.get(keyname);
-        
+        List<Long> versions = articles_to_revisions.get(keyname);
+
         //int random = (int) Math.random() * versions.size();
         Random r = new Random();
         int random = r.nextInt(versions.size());
-        
+
         return versions.get(random);
     }
 
@@ -1013,12 +1000,9 @@ public class File_CoreWorkload extends Workload {
         //choose a random key
         int keynum = nextKeynum();
         String keyname = fetchKeyName(keynum,thread_state);
-        if(times_read.containsKey(keyname) && times_read.get(keyname)<= k){
-            db.read(table, keyname);
-            times_read.put(keyname, times_read.get(keyname)+1);
-        }
+        db.read(table, keyname);
     }
-    
+
     public void doTransactionReadRange(DB db,Object thread_state) {
         //choose a random key
         int keynum = nextKeynum();
@@ -1026,18 +1010,13 @@ public class File_CoreWorkload extends Workload {
         String keyname = fetchKeyName(keynum,thread_state);
 
         Long versionA = nextVersion(keyname);
-        
-        Long versionB = nextVersion(keyname);
 
-        if(times_read.containsKey(keyname) && times_read.get(keyname)<= k){
+        Long versionB = nextVersion(keyname);
 
         if(versionA < versionB)
             db.readRange(table, keyname, new VersionScalar(versionA),new VersionScalar(versionB));
         else
             db.readRange(table, keyname, new VersionScalar(versionB),new VersionScalar(versionA));
-        
-        times_read.put(keyname, times_read.get(keyname)+1);
-        }
     }
 
     public void doTransactionReadModifyWrite(DB db) {
@@ -1061,7 +1040,6 @@ public class File_CoreWorkload extends Workload {
         }
 
         db.update(table, keyname, values);
-	times_read.put(keyname, 0);
     }
 
     public void doTransactionInsert(DB db) {
@@ -1072,17 +1050,16 @@ public class File_CoreWorkload extends Workload {
 
         HashMap<Version,ByteIterator> values = buildValues(dbkey);
         db.insert(table, dbkey, values);
-	times_read.put(dbkey, 0);
     }
 
     public int getDumpSize(){
-        return articles_keys.size();
+        return articles.size();
     }
 
     public int getReplaySize(){
-        return replay_sorted_articles_keys.size();
+        return replay_sorted_entries_keys.size();
     }
-    
+
 
 }
 

@@ -470,8 +470,8 @@ public class Client
 		System.out.println("  -target n: attempt to do n operations per second (default: unlimited) - can also\n" +
 				"             be specified as the \"target\" property using -p");
 		System.out.println("  -load:  run the loading phase of the workload");
-                System.out.println("  -replay: run YCSB in REPLAY mode ");
-                System.out.println("  -speedup : Should be used together with -replay tag. When used, inserts in replay mode are twice as fast ");
+        System.out.println("  -replay: run YCSB in REPLAY mode ");
+        System.out.println("  -speedup : Should be used together with -replay tag. When used, inserts in replay mode are twice as fast ");
 		System.out.println("  -t:  run the transactions phase of the workload (default)");
 		System.out.println("  -db dbname: specify the name of the DB to use (default: com.yahoo.ycsb.BasicDB) - \n" +
 				"              can also be specified as the \"db\" property using -p");
@@ -803,8 +803,12 @@ public class Client
 		int opcount;
 		if (dotransactions)
 		{
-			//opcount=Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY,"0"));
-			opcount=workload.getReplaySize();
+            if(replay){
+                // execute the replay log
+                opcount=workload.getReplaySize();
+            }else{
+                opcount=Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY,"0"));
+            }
 		}
 		else
 		{
@@ -814,7 +818,7 @@ public class Client
 			}
 			else
 			{
-				//opcount=Integer.parseInt(props.getProperty(RECORD_COUNT_PROPERTY,"0"));
+                // add all entries in the replay log (as fast as possible)
 				opcount=workload.getDumpSize();
 			}
 		}
