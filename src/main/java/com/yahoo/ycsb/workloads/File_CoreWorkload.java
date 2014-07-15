@@ -280,6 +280,10 @@ public class File_CoreWorkload extends Workload {
 
     public static final String SIZES_FILE_PROPERTY = "sizes_file";
 
+    public static final String SIZE_SCALE_PROPERTY = "sizeScale";
+
+    public static final String SIZE_SCALE_PROPERTY_DEFAULT = "10";
+
     /**
      * The redis database address for key querying
      */
@@ -355,7 +359,7 @@ public class File_CoreWorkload extends Workload {
     public Map<Long,Map<String,Long>> replay_entries;
 
     public Map<Long,Long> version_sizes;
-
+    public int size_scale;
 
     public static String redis_connection_info;
 
@@ -534,15 +538,10 @@ public class File_CoreWorkload extends Workload {
 
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
         String replay_file_path = p.getProperty(REPLAY_FILE_PROPERTY);
-        String redis_database_info = p.getProperty(REDIS_DATABASE_PROPERTY);
         String oldIds_file_path = p.getProperty(OLDID_FILE_PROPERTY);
         String sizes_file_path = p.getProperty(SIZES_FILE_PROPERTY);
 
-
-        if (keys_file_path == null && redis_database_info == null) {
-            throw new WorkloadException("No input source for keys define a file with \"keys_file\" " +
-                    "or a redis database with \"redis_database\" ");
-        }
+        size_scale = Integer.valueOf(p.getProperty(SIZE_SCALE_PROPERTY,SIZE_SCALE_PROPERTY_DEFAULT));
 
         boolean ok=false;
         try{
@@ -558,15 +557,6 @@ public class File_CoreWorkload extends Workload {
         }finally {
             if (!ok)
                 throw new RuntimeException("Invalid command line; missing files.");
-        }
-
-        if (redis_database_info != null) {
-            KEY_INPUT_SOURCE = REDIS_INPUT;
-            redis_connection_info = redis_database_info;
-            String[] connection_info = redis_connection_info.split(":");
-            String host = connection_info[0];
-            String port = connection_info[1];
-            System.out.println("Redis database in "+host+" : "+Integer.parseInt(port));
         }
 
         store_transaction_timelines = Boolean.parseBoolean(p.getProperty(STORE_TRANSACTION_TIMELINES_PROPERTY, STORE_TRANSACTION_TIMELINES_DEFAULT_PROPERTY));
@@ -814,7 +804,7 @@ public class File_CoreWorkload extends Workload {
         HashMap<Version,ByteIterator> content = new HashMap<>();
         for( Long revision: articles_to_revisions.get(article)){
             Long size = version_sizes.get(revision);
-            ByteIterator data = new RandomByteIterator(1);
+            ByteIterator data = new RandomByteIterator(size/size_scale);
             content.put(new VersionScalar(revision), data);
         }
 
