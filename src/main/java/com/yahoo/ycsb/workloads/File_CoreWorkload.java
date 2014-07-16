@@ -799,26 +799,37 @@ public class File_CoreWorkload extends Workload {
      * effects other than DB operations.
      */
     public boolean doInsert(DB db, Object threadstate) {
-        String article = articles.get(keysequence.nextInt());
+
+        int seq = keysequence.nextInt();
+        if (seq>getDumpSize())
+            return false;
+
+        String article = articles.get(seq);
+
         articles_to_revisions.get(article);
+
         HashMap<Version,ByteIterator> content = new HashMap<>();
+
         for( Long revision: articles_to_revisions.get(article)){
             Long size = version_sizes.get(revision);
             ByteIterator data = new RandomByteIterator(size/size_scale);
             content.put(new VersionScalar(revision), data);
         }
 
-        if (db.insert(table, article, content) == 0){
+        if (db.insert(table, article, content) == 0)
             return true;
-        }
-        else
-            return false;
+
+        return false;
     }
 
     public boolean doReplayInsert(DB db, Object threadstate) {
-        //re-utilizei o contador de chaves para conseguir progredir na lista de chaves ordenada por timestamp.
-        int keynum = keysequence.nextInt();
-        Long version1 = sorted_articles_revisions.get(keynum);
+
+        int seq = keysequence.nextInt();
+
+        if (seq>getReplaySize())
+            return false;
+
+        Long version1 = sorted_articles_revisions.get(seq);
         String db_key = String.valueOf(revisions_to_articles.get(version1));
         Long size = version_sizes.get(version1);
 
@@ -829,8 +840,8 @@ public class File_CoreWorkload extends Workload {
 
 
         //if there is a next key so that the difference can be calculated...
-        if(keynum+1 < sorted_articles_revisions.size()){
-            Long version2 = sorted_articles_revisions.get(keynum+1);
+        if(seq+1 < sorted_articles_revisions.size()){
+            Long version2 = sorted_articles_revisions.get(seq+1);
             Long diff = version2-version1;
 
             diff = diff/this.speedup;
@@ -843,15 +854,13 @@ public class File_CoreWorkload extends Workload {
                 }
                 return true;
             }
-            else
-                return false;
-        }
-        else{
-            if (db.insert(table, db_key, value) == 0)
+        }else if (db.insert(table, db_key, value) == 0){
                 return true;
-            else
-                return false;
         }
+
+        return false;
+
+
     }
 
     public boolean doTransactionReplay(DB db, Object threadstate) {
