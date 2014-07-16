@@ -49,6 +49,7 @@ public class InfinispanGlue extends DB {
                 }
             }catch(Exception e){
                 System.out.println("Fail to connect to "+server);
+                throw new RuntimeException("");
             }
         }
 
