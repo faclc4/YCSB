@@ -97,6 +97,9 @@ public class File_CoreWorkload extends Workload {
      * The name of the property for the length of a field in bytes.
      */
     public static final String FIELD_LENGTH_PROPERTY = "fieldlength";
+
+    private static int fieldlength;
+
     /**
      * The default maximum length of a field in bytes.
      */
@@ -350,9 +353,9 @@ public class File_CoreWorkload extends Workload {
     public static boolean KEY_INPUT_SOURCE = FILE_INPUT;
 
     public static ArrayList<String> articles;
-    public static ArrayList<Long> sorted_articles_revisions;
-    public static Map<String,List<Long>> articles_to_revisions;
-    public Map<Long,String> revisions_to_articles;
+    public static ArrayList<Long> sorted_versions;
+    public static Map<String,List<Long>> articles_to_versions;
+    public Map<Long,String> versions_to_articles;
     public static Map<String,Long> revisions_timestamps;
 
     public static ArrayList<Long> replay_sorted_entries_keys;
@@ -393,7 +396,7 @@ public class File_CoreWorkload extends Workload {
     protected static IntegerGenerator getFieldLengthGenerator(Properties p) throws WorkloadException {
         IntegerGenerator fieldlengthgenerator;
         String fieldlengthdistribution = p.getProperty(FIELD_LENGTH_DISTRIBUTION_PROPERTY, FIELD_LENGTH_DISTRIBUTION_PROPERTY_DEFAULT);
-        int fieldlength = Integer.parseInt(p.getProperty(FIELD_LENGTH_PROPERTY, FIELD_LENGTH_PROPERTY_DEFAULT));
+        fieldlength = Integer.parseInt(p.getProperty(FIELD_LENGTH_PROPERTY, FIELD_LENGTH_PROPERTY_DEFAULT));
         String fieldlengthhistogram = p.getProperty(FIELD_LENGTH_HISTOGRAM_FILE_PROPERTY, FIELD_LENGTH_HISTOGRAM_FILE_PROPERTY_DEFAULT);
         if (fieldlengthdistribution.compareTo("constant") == 0) {
             fieldlengthgenerator = new ConstantIntegerGenerator(fieldlength);
@@ -522,15 +525,15 @@ public class File_CoreWorkload extends Workload {
 
         articles = new ArrayList<String>();
 
-        sorted_articles_revisions = new ArrayList<Long>();
+        sorted_versions = new ArrayList<Long>();
 
         replay_sorted_entries_keys = new ArrayList<Long>();
 
-        articles_to_revisions = new HashMap<String,List<Long>>();
+        articles_to_versions = new HashMap<String,List<Long>>();
 
         revisions_timestamps = new HashMap<String,Long>();
 
-        revisions_to_articles = new TreeMap<Long,String>();
+        versions_to_articles = new TreeMap<Long,String>();
 
         replay_entries = new TreeMap<Long,Map<String,Long>>();
 
@@ -547,7 +550,6 @@ public class File_CoreWorkload extends Workload {
         try{
             if (keys_file_path != null && replay_file_path != null && oldIds_file_path != null && sizes_file_path != null) {
                 readDump(keys_file_path);
-                readRevisions(oldIds_file_path);
                 readReplayLog(replay_file_path);
                 importSizes(sizes_file_path);
                 ok=true;
@@ -602,35 +604,49 @@ public class File_CoreWorkload extends Workload {
         System.out.print("Reading dump ... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
         try {
-            articles_to_revisions = handler.readDump(new FileInputStream(keys_file_path));
+            articles_to_versions = handler.readDump(new FileInputStream(keys_file_path));
 
-            System.out.print(articles_to_revisions.size() + " articles, ");
+            System.out.print(articles_to_versions.size() + " articles, ");
 
-            for(String key : articles_to_revisions.keySet()){
+            for(String key : articles_to_versions.keySet()){
                 articles.add(key);
-                for(Long version : articles_to_revisions.get(key)){
-                    revisions_to_articles.put(version, key);
+                for(Long version : articles_to_versions.get(key)){
+                    versions_to_articles.put(version, key);
                 }
             }
 
-            System.out.print(revisions_to_articles.size() + " revisions");
+            System.out.print(versions_to_articles.size() + " revisions");
 
-            for(Long v : revisions_to_articles.keySet()){
-                sorted_articles_revisions.add(v);
+            for(Long v : versions_to_articles.keySet()){
+                sorted_versions.add(v);
             }
 
         } catch (Exception ex) {
             Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
         }
-        System.out.println("... done");
+        System.out.println(" ... done");
     }
 
-    public void importSizes(String sizes_file_path) throws Exception {
+    public void importSizes(String sizes_file_path) {
         System.out.print("Importing sizes ... ");
         CompressedDumpParser handler = new CompressedDumpParser();
-        version_sizes = handler.readSizes(new FileInputStream(sizes_file_path));
-        System.out.print(" size: "+ version_sizes.size());
-        System.out.println("... done");
+        long avrg_size = 0;
+        try {
+            version_sizes = handler.readSizes(new FileInputStream(sizes_file_path));
+            for(long size : version_sizes.values()){
+                avrg_size+=size;
+            }
+            avrg_size=avrg_size/version_sizes.size();
+        } catch (Exception e) {
+            System.out.print("(no file, using fault back value) ");
+            for(String article : articles_to_versions.keySet()){
+                for(Long version : articles_to_versions.get(article)){
+                    version_sizes.put(version,(long)fieldlength);
+                }
+            }
+            avrg_size=fieldlength;
+        }
+        System.out.println(avrg_size+" ... done");
     }
 
     public void readReplayLog(String replay_file_path) throws FileNotFoundException {
@@ -648,7 +664,7 @@ public class File_CoreWorkload extends Workload {
 
                 if(aux[2].matches(".*org/wiki/.*")){
                     String url = aux[2].replaceFirst(".*org/wiki/", "");
-                    if (!articles_to_revisions.keySet().contains(url)){
+                    if (!articles_to_versions.keySet().contains(url)){
                         url = articles.get(url.length()%articles.size());
                     }
                     Map vals = new HashMap();
@@ -662,28 +678,22 @@ public class File_CoreWorkload extends Workload {
                     Long revId = null;
                     boolean history=false;
 
-                    try{
-                        for(String item : stringsplit){
-                            if(item.startsWith("title=")){
-                                if(item.replace("title=", "")!= null)
-                                    url_final = item.replace("title=","");
-                            }
-                            if(item.startsWith("oldid=")){
-                                if(item.replace("oldid=", "")!= null){
-                                    revId = Long.parseLong(item.replace("oldid=", ""));
-                                }
-                            }
-                            if(item.startsWith("action=history")){
-                                history=true;
+                    for(String item : stringsplit){
+                        if(item.startsWith("title=")){
+                            if(item.replace("title=", "")!= null)
+                                url_final = item.replace("title=","");
+                        }
+                        if(item.startsWith("oldid=")){
+                            if(item.replace("oldid=", "")!= null){
+                                revId = Long.parseLong(item.replace("oldid=", ""));
                             }
                         }
-                    }catch (NumberFormatException e){
-                        e.printStackTrace();
-                        System.out.println(url);
-                        continue;
+                        if(item.startsWith("action=history")){
+                            history=true;
+                        }
                     }
 
-                    if (!articles_to_revisions.keySet().contains(url_final)){
+                    if (!articles_to_versions.keySet().contains(url_final)){
                         url_final = articles.get(url_final.length()%articles.size());
                     }
 
@@ -709,14 +719,10 @@ public class File_CoreWorkload extends Workload {
         System.out.println("done");
     }
 
-    public void readRevisions(String oldId_file_path){
+    public void readRevisions(String oldId_file_path) throws Exception {
         System.out.print("Reading revisions... ");
         CompressedDumpParser  handler = new CompressedDumpParser();
-        try {
-            revisions_timestamps = handler.readRevisions(new FileInputStream(oldId_file_path));
-        } catch (Exception ex) {
-            Logger.getLogger(File_CoreWorkload.class.getName()).log(Level.SEVERE, null, ex);
-        }
+        revisions_timestamps = handler.readRevisions(new FileInputStream(oldId_file_path));
         System.out.println("done");
     }
 
@@ -770,7 +776,7 @@ public class File_CoreWorkload extends Workload {
     public HashMap<Version,ByteIterator> buildValues(String keyname) {
         HashMap<Version,ByteIterator> values = new HashMap<Version,ByteIterator>();
 
-        List<Long> versions = articles_to_revisions.get(keyname);
+        List<Long> versions = articles_to_versions.get(keyname);
 
         for (Long version : versions) {
             ByteIterator data = new RandomByteIterator(fieldlengthgenerator.nextInt());
@@ -783,7 +789,7 @@ public class File_CoreWorkload extends Workload {
         //update a random field
         HashMap<Version,ByteIterator> values = new HashMap<Version,ByteIterator>();
 
-        List<Long> versions = articles_to_revisions.get(keyname);
+        List<Long> versions = articles_to_versions.get(keyname);
         Random r = new Random();
         int random = r.nextInt(versions.size());
 
@@ -806,11 +812,11 @@ public class File_CoreWorkload extends Workload {
 
         String article = articles.get(seq);
 
-        articles_to_revisions.get(article);
+        articles_to_versions.get(article);
 
         HashMap<Version,ByteIterator> content = new HashMap<>();
 
-        for( Long revision: articles_to_revisions.get(article)){
+        for( Long revision: articles_to_versions.get(article)){
             Long size = version_sizes.get(revision);
             ByteIterator data = new RandomByteIterator(size/size_scale);
             content.put(new VersionScalar(revision), data);
@@ -829,8 +835,8 @@ public class File_CoreWorkload extends Workload {
         if (seq>getReplaySize())
             return false;
 
-        Long version1 = sorted_articles_revisions.get(seq);
-        String db_key = String.valueOf(revisions_to_articles.get(version1));
+        Long version1 = sorted_versions.get(seq);
+        String db_key = String.valueOf(versions_to_articles.get(version1));
         Long size = version_sizes.get(version1);
 
         ByteIterator data = new RandomByteIterator(size);
@@ -840,8 +846,8 @@ public class File_CoreWorkload extends Workload {
 
 
         //if there is a next key so that the difference can be calculated...
-        if(seq+1 < sorted_articles_revisions.size()){
-            Long version2 = sorted_articles_revisions.get(seq+1);
+        if(seq+1 < sorted_versions.size()){
+            Long version2 = sorted_versions.get(seq+1);
             Long diff = version2-version1;
 
             diff = diff/this.speedup;
@@ -986,7 +992,7 @@ public class File_CoreWorkload extends Workload {
         //This function receives the key name and based on the ammount of versions for that key, computes a random index.
         //The index is then used to return the corresponding value from the version list.
         Long version;
-        List<Long> versions = articles_to_revisions.get(keyname);
+        List<Long> versions = articles_to_versions.get(keyname);
 
         //int random = (int) Math.random() * versions.size();
         Random r = new Random();
@@ -1090,7 +1096,4 @@ class ClientThreadState{
         return scan_thread;
     }
 }
-
-
-
 
