@@ -1,0 +1,7 @@
+#total_parsed_logs: 154161
+#total_read_latest: 153513
+#total_read_range: 351
+#total_read_previous_version: 312
+%read_latest: 99.58 %
+%read_range: 0.23 %
+%read_previous_versions: 0.2 %

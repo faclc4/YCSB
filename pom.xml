@@ -46,6 +46,11 @@
 			<artifactId>infinispan-versioning</artifactId>
 			<version>7.0.0-SNAPSHOT</version>
 		</dependency>
+	 <dependency>
+	  <groupId>berkeleydb</groupId>
+	  <artifactId>je</artifactId>
+	  <version>3.2.76</version>
+	 </dependency>
 	</dependencies>
 	<build>
 		<plugins>
@@ -61,11 +66,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.4</version>
+				<version>3.1</version>
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>eu.leads.XmlDumpParser</mainClass>
+							<mainClass>com.yahoo.ycsb.workloads.Parser</mainClass>
 						</manifest>
 					</archive>
                     <descriptorRefs>
