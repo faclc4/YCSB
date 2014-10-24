@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.lang.NullPointerException;
 import org.xml.sax.SAXException;
 
 /**
@@ -75,7 +74,6 @@ public class Parser implements IArticleFilter, Serializable{
         FileInputStream input_file_stream = null;
         BufferedReader input_reader = null;
         try {
-            System.out.print("Reading file: "+file_path);
             input_file_stream = new FileInputStream(file_path);
             input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
             
@@ -357,13 +355,11 @@ public class Parser implements IArticleFilter, Serializable{
     }
     
      public static void main(String[]args){  
-        if(args.length==0){
-            System.err.println("Missing parameters");
-            System.exit(1);
-        } 
-        else{             
+        if(args.length==2){
             try {
-                DBHandler bd_handler = new DBHandler();
+                String db_path = args[1];
+                
+                DBHandler bd_handler = new DBHandler(db_path);
                 bd_handler.init();
                 
                 Parser parser = new Parser(bd_handler);
@@ -378,12 +374,15 @@ public class Parser implements IArticleFilter, Serializable{
                     parser.step3();
                 }
                 
-                bd_handler.closeConn();
-                System.out.println("That's all folks!");
-
-            } catch (Exception e) {
+                bd_handler.closeConn(); 
+           } catch (Exception e) {
                 e.printStackTrace();
             }
+        } 
+        else{             
+            System.err.println("Missing parameters");
+            System.err.println("(step1|step2|step3) database_path");
+            System.exit(1);
         }
     }
 }

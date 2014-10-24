@@ -37,7 +37,7 @@ public class DBHandler {
     }
     
     public DBHandler(){
-        this.db_path="/home/fabio/Documents/Replayer/YCSB_replayer/dbs";
+        //this.db_path="/home/fabio/Documents/Replayer/YCSB_replayer/dbs";
     }
     
     public void init(){
