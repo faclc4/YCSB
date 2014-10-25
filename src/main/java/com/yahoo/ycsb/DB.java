@@ -91,6 +91,8 @@ public abstract class DB
      * @return
      */
     public abstract int read(String table, String key);
+    
+    public abstract int read(String table, String key, Version versionA);
 
 
     /**

@@ -76,13 +76,13 @@ public class DBWrapper extends DB
     @Override
     public int read(String table, String key) {
         long st=System.nanoTime();
-		int res=_db.read(table,key);
-		long en=System.nanoTime();
+	int res=_db.read(table,key);
+	long en=System.nanoTime();
         int time = (int)((en-st)/1000);
         time = (time<0) ? Integer.MAX_VALUE : time;
-		_measurements.measure("READ", time);
-		_measurements.reportReturnCode("READ",res);
-		return res;
+	_measurements.measure("READ", time);
+	_measurements.reportReturnCode("READ",res);
+	return res;
     }
 
     @Override
@@ -124,6 +124,18 @@ public class DBWrapper extends DB
 	long en=System.nanoTime();
 	_measurements.measure("DELETE",(int)((en-st)/1000));
 	_measurements.reportReturnCode("DELETE",res);
+	return res;
+    }
+
+    @Override
+    public int read(String table, String key, Version versionA) {
+        long st=System.nanoTime();
+        int res=_db.read(table,key);
+	long en=System.nanoTime();
+        int time = (int)((en-st)/1000);
+        time = (time<0) ? Integer.MAX_VALUE : time;
+	_measurements.measure("READ_PREVIOUS", time);
+	_measurements.reportReturnCode("READ_PREVIOUS",res);
 	return res;
     }
 }

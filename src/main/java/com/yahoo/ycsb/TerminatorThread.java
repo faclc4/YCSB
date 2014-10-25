@@ -30,14 +30,24 @@ import java.util.Vector;
 public class TerminatorThread extends Thread {
   
   private Vector<Thread> threads;
+  private Thread thread;
   private long maxExecutionTime;
   private Workload workload;
   private long waitTimeOutInMS;
   
-  public TerminatorThread(long maxExecutionTime, Vector<Thread> threads, 
-      Workload workload) {
+  public TerminatorThread(long maxExecutionTime, Vector<Thread> threads, Workload workload) {
     this.maxExecutionTime = maxExecutionTime;
     this.threads = threads;
+    this.workload = workload;
+    waitTimeOutInMS = 2000;
+    this.thread=null;
+    System.err.println("Maximum execution time specified as: " + maxExecutionTime + " secs");
+  }
+  
+  public TerminatorThread(long maxExecutionTime, Thread thread, Workload workload) {
+    this.maxExecutionTime = maxExecutionTime;
+    this.threads=null;
+    this.thread=thread;
     this.workload = workload;
     waitTimeOutInMS = 2000;
     System.err.println("Maximum execution time specified as: " + maxExecutionTime + " secs");
@@ -53,18 +63,33 @@ public class TerminatorThread extends Thread {
     System.err.println("Maximum time elapsed. Requesting stop for the workload.");
     workload.requestStop();
     System.err.println("Stop requested for workload. Now Joining!");
-    for (Thread t : threads) {
-      while (t.isAlive()) {
-        try {
-          t.join(waitTimeOutInMS);
-          if (t.isAlive()) {
-            System.err.println("Still waiting for thread " + t.getName() + " to complete. " +
-                "Workload status: " + workload.isStopRequested());
+    if(threads!=null){
+        for (Thread t : threads) {
+          while (t.isAlive()) {
+            try {
+              t.join(waitTimeOutInMS);
+              if (t.isAlive()) {
+                System.err.println("Still waiting for thread " + t.getName() + " to complete. " +
+                    "Workload status: " + workload.isStopRequested());
+              }
+            } catch (InterruptedException e) {
+              // Do nothing. Don't know why I was interrupted.
+            }
           }
-        } catch (InterruptedException e) {
-          // Do nothing. Don't know why I was interrupted.
         }
-      }
+    }
+    if(thread!= null){
+        while (thread.isAlive()) {
+            try {
+              thread.join(waitTimeOutInMS);
+              if (thread.isAlive()) {
+                System.err.println("Still waiting for thread " + thread.getName() + " to complete. " +
+                    "Workload status: " + workload.isStopRequested());
+              }
+            } catch (InterruptedException e) {
+              // Do nothing. Don't know why I was interrupted.
+            }
+          }
     }
   }
 }

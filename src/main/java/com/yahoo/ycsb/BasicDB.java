@@ -177,6 +177,19 @@ public class BasicDB extends DB
 		return 0;
     }
 
+    @Override
+    public int read(String table, String key, Version versionA) {
+        delay();
+
+		if (verbose)
+		{
+			System.out.print("READ "+table+" "+key+" "+versionA.toString()+" [ ");
+			System.out.println("]");
+		}
+
+	return 0;
+    }
+
 	/**
 	 * Short test of BasicDB
 	 */

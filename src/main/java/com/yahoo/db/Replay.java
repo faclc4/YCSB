@@ -27,7 +27,15 @@ public class Replay {
         this.list=list;
     }
     
+    public Replay(){
+    
+    }
+    
     public List<Page> getList(){
         return this.list;
+    }
+    
+    public Long getTs(){
+        return this.ts;
     }
 }
