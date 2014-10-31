@@ -49,6 +49,10 @@ public class Dump {
         }
     }
     
+    public String getPageId(){
+        return this.pageId;
+    }
+    
     public Long getSize(Long revId){
         if (contains(revId)){
             return this.revisionId_size.get(revId);

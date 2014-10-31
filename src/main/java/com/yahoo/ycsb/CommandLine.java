@@ -284,7 +284,8 @@ public class CommandLine
 		  for (int i=2; i<tokens.length; i++)
 		  {
 		     String[] nv=tokens[i].split("=");
-		     values.put(new VersionScalar(Integer.valueOf(nv[0])),new StringByteIterator(nv[1]));
+		     values.put(new VersionScalar(Long.parseLong(""+Integer.valueOf(nv[0]))),new StringByteIterator(nv[1]));
+                     //values.put(new VersionScalar(Integer.valueOf(nv[0])),new StringByteIterator(nv[1]));
 		  }
 
 		  int ret=db.update(table,tokens[1],values);
@@ -305,7 +306,8 @@ public class CommandLine
 		  for (int i=2; i<tokens.length; i++)
 		  {
 		     String[] nv=tokens[i].split("=");
-		     values.put(new VersionScalar(Integer.valueOf(nv[0])),new StringByteIterator(nv[1]));
+		     values.put(new VersionScalar(Long.parseLong(""+Integer.valueOf(nv[0]))),new StringByteIterator(nv[1]));
+                     //values.put(new VersionScalar(Integer.valueOf(nv[0])),new StringByteIterator(nv[1]));
 		  }
 
 		  int ret=db.insert(table,tokens[1],values);

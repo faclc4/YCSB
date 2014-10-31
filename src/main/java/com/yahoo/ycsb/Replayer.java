@@ -394,28 +394,87 @@ public class Replayer {
 		System.err.println("Starting test.");
 
 		int opcount;
-		if (dotransactions)
-		{
-            if(replay){
-                // execute the replay log
-                opcount=workload.getReplaySize();
-            }else{
-                opcount=Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY,"0"));
-            }
+		if (!dotransactions){
+                    //Loads data;
+                        opcount=Integer.parseInt(props.getProperty(OPERATION_COUNT_PROPERTY,"0"));
+                        //**************************************************************
+                        //         START LOADER THREAD
+                        //**************************************************************
+                        DB db=null;
+                        try
+                        {
+                                db=DBFactory.newDB(dbname,props);
+                        }
+                        catch (UnknownDBException e)
+                        {
+                                System.out.println("Unknown DB "+dbname);
+                                System.exit(0);
+                        }
+                        //Initiates the Dispatcher Thread.
+                        Thread loader_thread = new Thread(new LoaderThread(db_path,opcounter,db,workload,thread_pool,props));
+                        loader_thread.start();
+                        
+                        //**************************************************************
+                        //         START STATUS THREAD
+                        //**************************************************************
+
+                        StatusThreadReplayer statusthread=null;
+
+                        if (status)
+                        {
+                                boolean standardstatus=false;
+                                if (props.getProperty("measurementtype","").compareTo("timeseries")==0) 
+                                {
+                                        standardstatus=true;
+                                }	
+
+                                //Initiates the Status Thread.s
+                                statusthread = new StatusThreadReplayer(opcounter,label,standardstatus);
+                                statusthread.start();
+                        }
+                        long st=System.currentTimeMillis();
+
+                            Thread terminator = null;
+                            if (maxExecutionTime > 0) {
+                              terminator = new TerminatorThread(maxExecutionTime, loader_thread, workload);
+                              terminator.start();
+                            }
+                            int opsDone = 0;
+                                        try{
+                                                loader_thread.join();
+                                                opsDone += opcounter.getOppDone();
+                                        }
+                                        catch (InterruptedException e){
+                                        }
+                                        long en=System.currentTimeMillis();
+
+                                        if (terminator != null && !terminator.isInterrupted()) {
+                              terminator.interrupt();
+                            }
+
+                                        if (status){
+                                                statusthread.interrupt();
+                                        }
+                                        try{
+                                                workload.cleanup();
+                                        }
+                                        catch (WorkloadException e){
+                                                e.printStackTrace();
+                                                e.printStackTrace(System.out);
+                                                System.exit(0);
+                                        }
+                                        try{
+                                                exportMeasurements(props, opsDone, en - st);
+                                        } catch (IOException e){
+                                                System.err.println("Could not export measurements, error: " + e.getMessage());
+                                                e.printStackTrace();
+                                                System.exit(-1);
+                                        }
+                                        System.exit(0);
+           
 		}
 		else
-		{
-			if (props.containsKey(INSERT_COUNT_PROPERTY))
-			{
-				opcount=Integer.parseInt(props.getProperty(INSERT_COUNT_PROPERTY,"0"));
-			}
-			else
-			{
-                // add all entries in the replay log (as fast as possible)
-				opcount=workload.getDumpSize();
-			}
-		}
-
+		{// performs replay transactions                    
                 //**************************************************************
                 //         START DISPATCHER THREAD
                 //**************************************************************
@@ -455,61 +514,46 @@ public class Replayer {
                     }
 
                     long st=System.currentTimeMillis();
-                
-		
-    
-    Thread terminator = null;
-    
-    if (maxExecutionTime > 0) {
-      terminator = new TerminatorThread(maxExecutionTime, dispatcher_thread, workload);
-      terminator.start();
-    }
-    
-    int opsDone = 0;
-                try
-                {
-                        dispatcher_thread.join();
-                        opsDone += opcounter.getOppDone();
-                }
-                catch (InterruptedException e)
-                {
-                }
-		
+                    Thread terminator = null;
 
-		long en=System.currentTimeMillis();
-		
-		if (terminator != null && !terminator.isInterrupted()) {
-      terminator.interrupt();
-    }
+                    if (maxExecutionTime > 0) {
+                      terminator = new TerminatorThread(maxExecutionTime, dispatcher_thread, workload);
+                      terminator.start();
+                    }
+                    int opsDone = 0;
+                                try{
+                                        dispatcher_thread.join();
+                                        opsDone += opcounter.getOppDone();
+                                }
+                                catch (InterruptedException e){
+                                }
+                                long en=System.currentTimeMillis();
 
-		if (status)
-		{
-			statusthread.interrupt();
-		}
+                                if (terminator != null && !terminator.isInterrupted()) {
+                      terminator.interrupt();
+                    }
 
-		try
-		{
-			workload.cleanup();
-		}
-		catch (WorkloadException e)
-		{
-			e.printStackTrace();
-			e.printStackTrace(System.out);
-			System.exit(0);
-		}
-
-		try
-		{
-			exportMeasurements(props, opsDone, en - st);
-		} catch (IOException e)
-		{
-			System.err.println("Could not export measurements, error: " + e.getMessage());
-			e.printStackTrace();
-			System.exit(-1);
-		}
-
-                    
-		System.exit(0);
+                                if (status){
+                                        statusthread.interrupt();
+                                }
+                                try{
+                                        workload.cleanup();
+                                }
+                                catch (WorkloadException e){
+                                        e.printStackTrace();
+                                        e.printStackTrace(System.out);
+                                        System.exit(0);
+                                }
+                                try{
+                                        exportMeasurements(props, opsDone, en - st);
+                                } catch (IOException e){
+                                        System.err.println("Could not export measurements, error: " + e.getMessage());
+                                        e.printStackTrace();
+                                        System.exit(-1);
+                                }
+                                System.exit(0);
 	}  
+    }
+        
            
 }

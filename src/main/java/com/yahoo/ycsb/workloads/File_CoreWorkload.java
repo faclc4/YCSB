@@ -352,6 +352,7 @@ public class File_CoreWorkload extends Workload {
 
     public static boolean KEY_INPUT_SOURCE = FILE_INPUT;
 
+    
     public static ArrayList<String> articles;
     public static ArrayList<Long> sorted_versions;
     public static Map<String,List<Long>> articles_to_versions;
@@ -362,10 +363,11 @@ public class File_CoreWorkload extends Workload {
     public Map<Long,Map<String,Long>> replay_entries;
 
     public Map<Long,Long> version_sizes;
-    public int size_scale;
+    
 
     public static String redis_connection_info;
 
+    public int size_scale;
     boolean use_file_columns;
 
     boolean store_transaction_timelines;
@@ -419,6 +421,8 @@ public class File_CoreWorkload extends Workload {
     /**
      * Initialize the scenario.
      * Called once, in the main client thread, before any operations are started.
+     * @param p
+     * @throws com.yahoo.ycsb.WorkloadException
      */
     public void init(Properties p) throws WorkloadException {
         table = p.getProperty(TABLENAME_PROPERTY, TABLENAME_PROPERTY_DEFAULT);
@@ -522,7 +526,9 @@ public class File_CoreWorkload extends Workload {
         }
 
         use_file_columns = Boolean.parseBoolean(p.getProperty(USE_FILE_COLUMNS_PROPERTY, USE_FILE_COLUMNS_DEFAULT_PROPERTY));
-
+        
+        size_scale = Integer.valueOf(p.getProperty(SIZE_SCALE_PROPERTY,SIZE_SCALE_PROPERTY_DEFAULT));
+        /*
         articles = new ArrayList<String>();
 
         sorted_versions = new ArrayList<Long>();
@@ -538,13 +544,13 @@ public class File_CoreWorkload extends Workload {
         replay_entries = new TreeMap<Long,Map<String,Long>>();
 
         version_sizes = new TreeMap<Long,Long>();
-
+        
+        
         String keys_file_path = p.getProperty(KEYS_FILE_PROPERTY);
         String replay_file_path = p.getProperty(REPLAY_FILE_PROPERTY);
         String oldIds_file_path = p.getProperty(OLDID_FILE_PROPERTY);
         String sizes_file_path = p.getProperty(SIZES_FILE_PROPERTY);
-
-        size_scale = Integer.valueOf(p.getProperty(SIZE_SCALE_PROPERTY,SIZE_SCALE_PROPERTY_DEFAULT));
+        
 
         boolean ok=false;
         try{
@@ -560,6 +566,7 @@ public class File_CoreWorkload extends Workload {
             if (!ok)
                 throw new RuntimeException("Invalid command line; missing files.");
         }
+        */
 
         store_transaction_timelines = Boolean.parseBoolean(p.getProperty(STORE_TRANSACTION_TIMELINES_PROPERTY, STORE_TRANSACTION_TIMELINES_DEFAULT_PROPERTY));
 
@@ -733,19 +740,8 @@ public class File_CoreWorkload extends Workload {
         if (store_transaction_timelines) {
             resultHandler = ResultStorage.getQueryResultHandlerInstance(Integer.toString(mythreadid));
         }
-
-        Jedis redis_client = null;
-
-        if(KEY_INPUT_SOURCE == REDIS_INPUT){
-            String[] connection_info = redis_connection_info.split(":");
-            String host = connection_info[0];
-            String port = connection_info[1];
-            redis_client = new Jedis(host,Integer.parseInt(port));
-        }
-
-        ClientThreadState clientThreadState = new ClientThreadState(redis_client,resultHandler);
-
-        //   Pair<ResultHandler,Jedis> thread_state = new Pair<ResultHandler, Jedis>(resultHandler,redis_client);
+        ClientThreadState clientThreadState = new ClientThreadState(resultHandler);
+        
         return clientThreadState;
     }
 
@@ -917,8 +913,9 @@ public class File_CoreWorkload extends Workload {
             }
             return true;
         }
-
-        if (dorange && db.readRange(table, article, new VersionScalar(0),new VersionScalar(entry_key)) == 0){
+        
+        //if (dorange && db.readRange(table, article, new VersionScalar(0),new VersionScalar(entry_key)) == 0){
+        if (dorange && db.readRange(table, article, new VersionScalar(0L),new VersionScalar(entry_key)) == 0){
             if(last_read.containsKey(article)){
                 last_read.put(article, last_read.get(article)+1);
             }else{
@@ -970,7 +967,6 @@ public class File_CoreWorkload extends Workload {
 
         return true;
     }
-
 
     int nextKeynum() {
         int keynum;
@@ -1066,34 +1062,5 @@ public class File_CoreWorkload extends Workload {
     }
 
 
-}
-
-class ClientThreadState{
-
-    Jedis redis_connection;
-    ResultHandler client_resultHandler;
-    boolean scan_thread;
-
-    ClientThreadState(Jedis redis_connection, ResultHandler client_resultHandler) {
-        this.redis_connection = redis_connection;
-        this.client_resultHandler = client_resultHandler;
-        this.scan_thread = false;
-    }
-
-    public void setScan_thread(boolean scan_thread) {
-        this.scan_thread = scan_thread;
-    }
-
-    public Jedis getRedis_connection() {
-        return redis_connection;
-    }
-
-    public ResultHandler getClient_resultHandler() {
-        return client_resultHandler;
-    }
-
-    public boolean isScan_thread() {
-        return scan_thread;
-    }
 }
 

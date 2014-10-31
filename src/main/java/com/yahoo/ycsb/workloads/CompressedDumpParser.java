@@ -42,11 +42,11 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
     SimpleDateFormat formatter2 = new SimpleDateFormat("yyyy-MM");
 
     @SuppressWarnings("serial")
-    public void process(final WikiArticle page, Siteinfo siteinfo)
-            throws SAXException {
+    @Override
+    public void process(final WikiArticle page, Siteinfo siteinfo) throws SAXException {
 
-        revisions++;
-
+        revisions++;        
+        
         BigInteger pId = new BigInteger(page.getId());
         String url = page.getTitle();
 
@@ -54,26 +54,21 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
             final long ts = formatter.parse(page.getTimeStamp()).getTime();
             final String RevId = page.getRevisionId();
             if (pageRevisions.containsKey(url)) {
-                pageRevisions.get(url).add(ts);
+                pageRevisions.get(url).add(ts);   
             } else {
                 pageRevisions.put(url, new ArrayList<Long>());
                 pageRevisions.get(url).add(ts);
                 pages++;
             }
-
             if(!revisionIds.containsKey(RevId)){
                 revisionIds.put(RevId, ts);
             }
-
-
         } catch (ParseException e) {
             throw new SAXException("Error parsing date: " + page.getTimeStamp(), e);
         }
-
         if ((pages % 1000) == 0) {
             System.out.print("Overall pages read so far: "+ pages + " Revisions: " + revisions  + "\r");
         }
-
     }
 
     public HashMap<String, List<Long>> readDump(InputStream stream) throws Exception {
@@ -206,8 +201,6 @@ public class CompressedDumpParser implements IArticleFilter, Serializable{
             Logger.getLogger(CompressedDumpParser.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-
-
 
     /**
      * @param args
