@@ -1,6 +1,7 @@
 package com.yahoo.ycsb.workloads;
 
 import com.sleepycat.je.DatabaseException;
+import com.sleepycat.je.LockMode;
 import com.sleepycat.persist.EntityCursor;
 import com.sleepycat.persist.EntityStore;
 import com.sleepycat.persist.PrimaryIndex;
@@ -149,15 +150,15 @@ public class Parser implements IArticleFilter, Serializable{
     }
     
     public void step1(){
-        //String file_path="/home/fabio/Documents/Replayer/YCSB_replayer/out-final";
-        //System.out.print("Reading file: "+file_path);
-        //FileInputStream input_file_stream = null;
+        String file_path="/home/fabio/Documents/Replayer/Script_Environments/ReplayLogs/out-final";
+        System.out.print("Reading file: "+file_path);
+        FileInputStream input_file_stream = null;
         BufferedReader input_reader = null;
         
         try {
-        //input_file_stream = new FileInputStream(file_path);    
-        //input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
-        input_reader = new BufferedReader(new InputStreamReader(System.in));
+        input_file_stream = new FileInputStream(file_path);    
+        input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
+        //input_reader = new BufferedReader(new InputStreamReader(System.in));
         //Database Handlers
         replay_ts_pageID = db_handler.getReplay_ts_pageID();
         pageID_AcessLog = db_handler.getpageId_Acess_log();
@@ -167,6 +168,7 @@ public class Parser implements IArticleFilter, Serializable{
 
         String line = "";
             while ((line = input_reader.readLine()) != null) {
+                long start = System.currentTimeMillis();
                 boolean insert=false;
                 String url = null;
                 String [] aux = line.split("\\s");
@@ -174,14 +176,20 @@ public class Parser implements IArticleFilter, Serializable{
                 
                 Long ts = formatter_step1.parse(param).getTime();               
                 
-                if(aux[2].matches(".*org/wiki/.*")){
+                if(aux[2].startsWith("http://en") && aux[2].matches(".*org/wiki/.*")){
                     url = aux[2].replaceFirst(".*org/wiki/", "");
                     //insert into DB:
+                    long get1 = System.currentTimeMillis();
                     Replay_ts_pageID record = (Replay_ts_pageID)replay_ts_pageID_handler.get(ts);
+                    long get2 = System.currentTimeMillis();
+                    System.out.println("step1: get1 "+(get2-get1));
                     if(record != null){
                         Map<String,Integer> map = record.getMap();
                         map.put(url, Operation.READ_LATEST);
+                        long put1 = System.currentTimeMillis();
                         replay_ts_pageID_handler.putNoReturn(record);
+                        long put2 = System.currentTimeMillis();
+                        System.out.println("ste1: get2 "+(put2-put1));
                     }
                     else{
                         replay_ts_pageID_handler.putNoReturn(new Replay_ts_pageID(ts,url,Operation.READ_LATEST));
@@ -189,7 +197,7 @@ public class Parser implements IArticleFilter, Serializable{
                     insert=true;
                     this.total_read_latest++;
                     
-                } else if(aux[2].matches(".*org/w/.*")){
+                } else if(aux[2].startsWith("http://en") && aux[2].matches(".*org/w/.*")){
                     url = aux[2].replaceFirst(".*org/w/index\\.php\\?", "");
                     String stringsplit[] = url.split("\\&");
 
@@ -203,14 +211,23 @@ public class Parser implements IArticleFilter, Serializable{
                         if(item.startsWith("oldid=")){
                             if(item.replace("oldid=", "")!= null){
                                 //revId = Long.parseLong(item.replace("oldid=", ""));
+                                long get3 = System.currentTimeMillis();
                                 Replay_ts_pageID record = (Replay_ts_pageID)replay_ts_pageID_handler.get(ts);
+                                long get4 = System.currentTimeMillis();
+                                System.out.println("ste1: get2 "+(get4-get3));
                                 if(record != null){
                                     Map<String,Integer> map = record.getMap();
                                     map.put(url_final, Operation.READ_PREVIOUS);
+                                    long put5 = System.currentTimeMillis();
                                     replay_ts_pageID_handler.putNoReturn(record);
+                                    long put6 = System.currentTimeMillis();
+                                    System.out.println("ste1: put3 "+(put6-put5));
                                 }
                                 else{
+                                    long put7 = System.currentTimeMillis();
                                     replay_ts_pageID_handler.putNoReturn(new Replay_ts_pageID(ts,url_final,Operation.READ_LATEST));
+                                    long put8 = System.currentTimeMillis();
+                                    System.out.println("ste1: put4 "+(put8-put7));
                                 }
                                 insert=true;
                                 this.total_read_previous++;
@@ -234,8 +251,12 @@ public class Parser implements IArticleFilter, Serializable{
                     url=url_final;
                 }
                 if(insert){
+                    long get5 = System.currentTimeMillis();
                     //Check for the first and last Ts for page info.
                     Page_id_AcessLog record = (Page_id_AcessLog)pageID_AcessLog_handler.get(url);
+                    Page_id_AcessLog recordX = (Page_id_AcessLog)pageID_AcessLog_handler.get(null, url, LockMode.READ_UNCOMMITTED);
+                    long get6 = System.currentTimeMillis();
+                    System.out.println("ste1: get3 "+(get6-get5));
                     if(record!=null){
                         if(record.getfirst() == null || record.getLast()==null){
                             record.setFirst(ts);
@@ -247,14 +268,24 @@ public class Parser implements IArticleFilter, Serializable{
                         if(ts > record.getLast()){
                             record.setLast(ts);
                         }
+                        
+                        long put9 = System.currentTimeMillis();
                         pageID_AcessLog_handler.putNoReturn(record);
+                        long put10 = System.currentTimeMillis();
+                        System.out.println("ste1: put5 "+(put10-put9));
                     }
                     else{
+                        long put11 = System.currentTimeMillis();
                         pageID_AcessLog_handler.put(new Page_id_AcessLog(url,ts,ts));
+                        long put12 = System.currentTimeMillis();
+                        System.out.println("ste1: put6 "+(put12-put11));
                     }
                     this.total_parser_logs++;
                 }
+            long finale = System.currentTimeMillis();
+            System.out.println("ste1: total "+(finale-start)); 
             }
+            
         } catch (IOException ex) {
             throw new RuntimeException("Unable to read replay log");
         } catch (DatabaseException ex) {
@@ -305,7 +336,9 @@ public class Parser implements IArticleFilter, Serializable{
                     dump_handler.putNoReturn(new Dump(url,record));
                 }
             }
-            dump_handler.put(new Dump(url,ts,size));
+            else{
+                dump_handler.putNoReturn(new Dump(url,ts,size));
+            }
         } catch (ParseException ex) {
             Logger.getLogger(Parser.class.getName()).log(Level.SEVERE, null, ex);
         } catch (DatabaseException ex) {
@@ -339,10 +372,17 @@ public class Parser implements IArticleFilter, Serializable{
                 
                 for(Map.Entry<String,Integer> page : record.getMap().entrySet()){
                     if(page.getValue()==Operation.READ_LATEST || page.getValue()==Operation.READ_RANGE){
-                        revId = ((Dump)dump_handler.get(page.getKey())).getLastMapIndex();
+                        if(dump_handler.contains(page.getKey())){
+                            //revId = ((Dump)dump_handler.get(page.getKey())).getLastMapIndex();
+                            revId = ((Dump)dump_handler.get(page.getKey())).getLastMapIndex();
+                        }
+                        else break;
                     }
                     if(page.getValue()==Operation.READ_PREVIOUS){
-                        revId = ((Dump)dump_handler.get(page.getKey())).getFirstMapIndex();
+                        if(dump_handler.contains(page.getKey())){
+                            revId = ((Dump)dump_handler.get(page.getKey())).getFirstMapIndex();
+                        }
+                        else break;
                     }
                     pages.add(new Page(page.getKey(),page.getValue(),revId));
                 }
@@ -362,6 +402,7 @@ public class Parser implements IArticleFilter, Serializable{
                 DBHandler bd_handler = new DBHandler(db_path);
                 bd_handler.init();
                 
+                
                 Parser parser = new Parser(bd_handler);
                 
                 if(args[0].equals("step1")){
@@ -373,6 +414,7 @@ public class Parser implements IArticleFilter, Serializable{
                 if(args[0].equals("step3")){
                     parser.step3();
                 }
+                
                 
                 bd_handler.closeConn(); 
            } catch (Exception e) {

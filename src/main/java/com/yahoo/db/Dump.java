@@ -2,6 +2,7 @@ package com.yahoo.db;
 
 import com.sleepycat.persist.model.Entity;
 import com.sleepycat.persist.model.PrimaryKey;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -65,10 +66,11 @@ public class Dump {
     }
     
     public Long getLastMapIndex(){
-        return this.revisionId_size.get(this.revisionId_size.size()-1);
+        //return this.revisionId_size.get(this.revisionId_size.size()-1);
+        return (new ArrayList<Long>(this.revisionId_size.values())).get(this.revisionId_size.size()-1);
     }
     
     public Long getFirstMapIndex(){
-        return this.revisionId_size.get(0);
+        return (new ArrayList<Long>(this.revisionId_size.values())).get(0);
     }
 }

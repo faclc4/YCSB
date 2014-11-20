@@ -16,6 +16,9 @@ import java.util.concurrent.Executors;
 /**
  *
  * @author Fábio Coelho
+ * 
+ * Run args: -db com.yahoo.ycsb.InfinispanGlue -t -db_path /home/fabio/Documents/Replayer/YCSB_Replay/dbs -P file_workloads/workload_1
+ * 
  */
 public class Replayer {
     

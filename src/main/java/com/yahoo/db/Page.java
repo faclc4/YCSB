@@ -1,14 +1,18 @@
 package com.yahoo.db;
 
+import com.sleepycat.persist.model.Persistent;
+
 /**
  *
  * @author Fábio Coelho
  */
-public class Page {
+@Persistent public class Page {
     
     String url;
     Integer op;
     Long RevId;
+    
+    public Page(){}
     
     public Page(String url, Integer op, Long RevId){
         this.url=url;
