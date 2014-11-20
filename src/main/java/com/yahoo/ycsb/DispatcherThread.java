@@ -82,7 +82,7 @@ public class DispatcherThread implements Runnable{
                     }                
                     cursor.prev();
                     //Sleeps the required time;
-                    //Thread.sleep(diff);
+                    Thread.sleep(diff);
                 }
                 else{
                     //Submits each page op to the threadpool.
