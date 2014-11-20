@@ -99,6 +99,8 @@ public class DispatcherThread implements Runnable{
             Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
         }  catch (WorkloadException ex) {
             Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
         }        
     }
 }
