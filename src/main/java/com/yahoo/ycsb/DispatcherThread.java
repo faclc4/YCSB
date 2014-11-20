@@ -68,26 +68,28 @@ public class DispatcherThread implements Runnable{
             Replay record = null;
             Replay record_next = null;
             
-            while((record = cursor.next())!= null && record != cursor.last()){
+            //record != cursor.last()
+            while((record = cursor.next())!= null){
                 record_next = cursor.next();
+                if(record_next != null){
+                    Long diff = record_next.getTs()-record.getTs();
                 
-                Long diff = record_next.getTs()-record.getTs();
+                    //Submits each page op to the threadpool.
                 
-                //Submits each page op to the threadpool.
-                
-                for(Page pg : record.getList()){
-                    thread_pool.execute(new WorkerThread(_db,pg,resultHandler));
-                    opscounter.incrementOp();
-                }                
-                cursor.prev();
-                //Sleeps the required time;
-                Thread.sleep(diff);
-            }
-            if((record = cursor.next())!= null && record == cursor.last()){
-                //Submits each page op to the threadpool.
-                for(Page pg : record.getList()){
-                    thread_pool.execute(new WorkerThread(_db,pg,resultHandler));
-                    opscounter.incrementOp();
+                    for(Page pg : record.getList()){
+                        thread_pool.execute(new WorkerThread(_db,pg,resultHandler));
+                        opscounter.incrementOp();
+                    }                
+                    cursor.prev();
+                    //Sleeps the required time;
+                    //Thread.sleep(diff);
+                }
+                else{
+                    //Submits each page op to the threadpool.
+                    for(Page pg : record.getList()){
+                        thread_pool.execute(new WorkerThread(_db,pg,resultHandler));
+                        opscounter.incrementOp();
+                    }
                 }
             }
             //Stop Thread Pool
@@ -95,9 +97,7 @@ public class DispatcherThread implements Runnable{
             
         } catch (DatabaseException ex) {
             Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (InterruptedException ex) {
-            Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (WorkloadException ex) {
+        }  catch (WorkloadException ex) {
             Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
         }        
     }

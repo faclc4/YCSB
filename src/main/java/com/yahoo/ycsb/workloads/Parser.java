@@ -375,16 +375,17 @@ public class Parser implements IArticleFilter, Serializable{
                         if(dump_handler.contains(page.getKey())){
                             //revId = ((Dump)dump_handler.get(page.getKey())).getLastMapIndex();
                             revId = ((Dump)dump_handler.get(page.getKey())).getLastMapIndex();
+                            pages.add(new Page(page.getKey(),page.getValue(),revId));
                         }
                         else break;
                     }
                     if(page.getValue()==Operation.READ_PREVIOUS){
                         if(dump_handler.contains(page.getKey())){
                             revId = ((Dump)dump_handler.get(page.getKey())).getFirstMapIndex();
+                            pages.add(new Page(page.getKey(),page.getValue(),revId));
                         }
                         else break;
                     }
-                    pages.add(new Page(page.getKey(),page.getValue(),revId));
                 }
                 replay_handler.putNoReturn(new Replay(ts,pages));
             }
