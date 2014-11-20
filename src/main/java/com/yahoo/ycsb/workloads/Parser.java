@@ -400,7 +400,7 @@ public class Parser implements IArticleFilter, Serializable{
                 String db_path = args[1];
                 
                 DBHandler bd_handler = new DBHandler(db_path);
-                bd_handler.init();
+                //bd_handler.init();
                 
                 
                 Parser parser = new Parser(bd_handler);

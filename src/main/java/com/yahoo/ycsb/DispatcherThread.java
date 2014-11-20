@@ -35,7 +35,7 @@ public class DispatcherThread implements Runnable{
     public DispatcherThread(String db_path,OpCounter opcounter,DB db, Workload workload,ExecutorService thread_pool,Properties props){
         try {
             this.bd_handler = new DBHandler(db_path);
-            bd_handler.init();
+            //bd_handler.init();
             
             replay = bd_handler.getReplay();
             replay_handler = replay.getPrimaryIndex(Long.class, Replay.class);

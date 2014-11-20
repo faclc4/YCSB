@@ -18,29 +18,34 @@ public class DBHandler {
     
     EnvironmentConfig env_config;
     Environment env;
-    DatabaseConfig db_conf;
-    //Database replay_ts_pageID;
-    //Database pageId_Access_log;
-    //Database dump;
-    
-    
+    DatabaseConfig db_conf;   
     EntityStore replay_ts_pageID;
     EntityStore pageId_Access_log;
     EntityStore dump;
     EntityStore replay;
     
     private String db_path;
+    private String db_path_final;
+    private EnvironmentConfig env_config_final;
+    private Environment env_final;
   
     public DBHandler(String path){
         this.db_path=path;
-        this.init();
+        this.init_single();
+    }
+    
+    public DBHandler(String path, String path_final){
+        this.db_path=path;
+        this.db_path_final=path_final;
+        this.init_double();
     }
     
     public DBHandler(){
         //this.db_path="/home/fabio/Documents/Replayer/YCSB_replayer/dbs";
     }
     
-    public void init(){
+    
+    public void init_single(){
         try {
             env_config = new EnvironmentConfig();
             env_config.setAllowCreate(true);
@@ -49,20 +54,9 @@ public class DBHandler {
             
             //Environment = SQL Database;
             env = new Environment(new File(db_path),env_config);
-
-            
-            
+ 
             StoreConfig stConfig = new StoreConfig();
             stConfig.setAllowCreate(true);
-            
-            /*
-            db_conf = new DatabaseConfig();
-            db_conf.setAllowCreate(true);
-            
-            replay_ts_pageID = env.openDatabase(null, "replay_ts_pageID", db_conf);
-            pageId_Access_log = env.openDatabase(null, "pageId_Access_log", db_conf);
-            dump = env.openDatabase(null, "dump", db_conf);
-            */
             
             replay_ts_pageID = new EntityStore(env,"replay_ts_pageID", stConfig);
             pageId_Access_log = new EntityStore(env,"pageId_Access_log", stConfig);
@@ -71,6 +65,31 @@ public class DBHandler {
         } catch (DatabaseException ex) {
             Logger.getLogger(DBHandler.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public void init_double(){
+        try {
+            env_config = new EnvironmentConfig();
+            env_config.setAllowCreate(true);
+
+            env_config_final = new EnvironmentConfig();
+            env_config_final.setAllowCreate(true);
+
+            //Environment = SQL Database;
+            env = new Environment(new File(db_path),env_config);
+            env_final = new Environment(new File(db_path_final),env_config_final);
+
+            StoreConfig stConfig = new StoreConfig();
+            stConfig.setAllowCreate(true);
+
+            replay_ts_pageID = new EntityStore(env,"replay_ts_pageID", stConfig);
+            pageId_Access_log = new EntityStore(env,"pageId_Access_log", stConfig);
+            dump = new EntityStore(env,"dump",stConfig);
+            replay = new EntityStore(env_final,"replay",stConfig);
+        } catch (DatabaseException ex) {
+            Logger.getLogger(DBHandler.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    
     }
     
     public void closeConn(){
