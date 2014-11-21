@@ -150,15 +150,15 @@ public class Parser implements IArticleFilter, Serializable{
     }
     
     public void step1(){
-        String file_path="/home/fabio/Documents/Replayer/Script_Environments/ReplayLogs/out-final";
-        System.out.print("Reading file: "+file_path);
-        FileInputStream input_file_stream = null;
+        //String file_path="/home/fabio/Documents/Replayer/Script_Environments/ReplayLogs/out-final";
+        //System.out.print("Reading file: "+file_path);
+        //FileInputStream input_file_stream = null;
         BufferedReader input_reader = null;
         
         try {
-        input_file_stream = new FileInputStream(file_path);    
-        input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
-        //input_reader = new BufferedReader(new InputStreamReader(System.in));
+        //input_file_stream = new FileInputStream(file_path);    
+        //input_reader = new BufferedReader(new InputStreamReader(input_file_stream));
+        input_reader = new BufferedReader(new InputStreamReader(System.in));
         //Database Handlers
         replay_ts_pageID = db_handler.getReplay_ts_pageID();
         pageID_AcessLog = db_handler.getpageId_Acess_log();

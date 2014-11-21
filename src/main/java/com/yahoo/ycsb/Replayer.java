@@ -413,7 +413,7 @@ public class Replayer {
                                 System.out.println("Unknown DB "+dbname);
                                 System.exit(0);
                         }
-                        //Initiates the Dispatcher Thread.
+                        //Initiates the Loader Thread.
                         Thread loader_thread = new Thread(new LoaderThread(db_path,opcounter,db,workload,thread_pool,props));
                         loader_thread.start();
                         
