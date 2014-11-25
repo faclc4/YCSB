@@ -8,10 +8,20 @@ mvn clean package assembly:single
 
 ====
 Pre-process stage:
-Execute Scripts: step1, step2, step3
+Execute Scripts: 
+```bash
+sh step1.sh, sh step2.sh, sh step3.sh
+```
+To execute the Load action:
+```bash 
+sh LoadDump.sh
+```
 
 To execute the Replay action:
-Execute Script: replay
+Execute Script: 
+```bash 
+sh replay.sh 
+```
 
 To configure workload modify the workload file: 
 
