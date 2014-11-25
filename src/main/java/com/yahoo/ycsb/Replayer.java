@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
  *
  * @author Fábio Coelho
  * 
- * Run args: -db com.yahoo.ycsb.InfinispanGlue -t -db_path /home/fabio/Documents/Replayer/YCSB_Replay/dbs -P file_workloads/workload_1
+ * Run args: -db com.yahoo.ycsb.InfinispanGlue -load -db_path /home/fabio/Documents/Replayer/YCSB_Replay/dbs -P file_workloads/workload_1
  * 
  */
 public class Replayer {
@@ -416,6 +416,7 @@ public class Replayer {
                         //Initiates the Loader Thread.
                         Thread loader_thread = new Thread(new LoaderThread(db_path,opcounter,db,workload,thread_pool,props));
                         loader_thread.start();
+                        loader_thread.join();
                         
                         //**************************************************************
                         //         START STATUS THREAD

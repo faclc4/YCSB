@@ -36,7 +36,7 @@ import java.util.logging.Logger;
 import org.xml.sax.SAXException;
 
 /**
- *
+ * Run args: step3 /home/fabio/Documents/Replayer/YCSB_Replay/dbs/
  * @author Fábio Coelho
  */
 public class Parser implements IArticleFilter, Serializable{
