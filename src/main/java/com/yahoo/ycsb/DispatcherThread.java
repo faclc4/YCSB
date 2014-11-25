@@ -8,6 +8,8 @@ import com.yahoo.db.DBHandler;
 import com.yahoo.db.Page;
 import com.yahoo.db.Replay;
 import com.yahoo.ycsb.measurements.ResultHandler;
+import static com.yahoo.ycsb.workloads.File_CoreWorkload.SPEEDUP_PROPERTY;
+import static com.yahoo.ycsb.workloads.File_CoreWorkload.SPEEDUP_PROPERTY_DEFAULT;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.logging.Level;
@@ -31,6 +33,7 @@ public class DispatcherThread implements Runnable{
     public OpCounter opscounter=null;
     Workload workload=null;
     ExecutorService thread_pool =null;
+    Long speedup = 0L;
     
     public DispatcherThread(String db_path,OpCounter opcounter,DB db, Workload workload,ExecutorService thread_pool,Properties props){
         try {
@@ -48,6 +51,7 @@ public class DispatcherThread implements Runnable{
             
             this.thread_pool = thread_pool;
             this._props=props;
+            speedup = Long.parseLong(_props.getProperty(SPEEDUP_PROPERTY, SPEEDUP_PROPERTY_DEFAULT));
             
         } catch (DatabaseException ex) {
             Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
@@ -68,11 +72,10 @@ public class DispatcherThread implements Runnable{
             Replay record = null;
             Replay record_next = null;
             
-            //record != cursor.last()
             while((record = cursor.next())!= null){
                 record_next = cursor.next();
                 if(record_next != null){
-                    Long diff = record_next.getTs()-record.getTs();
+                    Long diff = (record_next.getTs()-record.getTs())/speedup;
                 
                     //Submits each page op to the threadpool.
                 
@@ -81,7 +84,6 @@ public class DispatcherThread implements Runnable{
                         opscounter.incrementOp();
                     }                
                     cursor.prev();
-                    //Sleeps the required time;
                     Thread.sleep(diff);
                 }
                 else{

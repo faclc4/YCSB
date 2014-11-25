@@ -40,10 +40,8 @@ public class LoaderThread implements Runnable{
     public LoaderThread(String db_path,OpCounter opcounter,DB db, Workload workload,ExecutorService thread_pool,Properties props){
         try {
             this.bd_handler = new DBHandler(db_path);
-            //bd_handler.init();
             
             dump = bd_handler.getDump();
-            //dump_handler = dump.getPrimaryIndex(String.class, Page_id_AcessLog.class);
             dump_handler = dump.getPrimaryIndex(String.class, Dump.class);
             
             this._db=db;
@@ -72,8 +70,6 @@ public class LoaderThread implements Runnable{
             
             Dump record = null;
             HashMap<Version,ByteIterator> content = new HashMap<>();
-            
-            record = cursor.next();
             
             while((record = cursor.next())!= null){
                for(Map.Entry<Long,Long> revision : record.getMap().entrySet()){
