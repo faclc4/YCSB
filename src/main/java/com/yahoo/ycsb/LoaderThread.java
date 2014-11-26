@@ -6,7 +6,6 @@ import com.sleepycat.persist.EntityStore;
 import com.sleepycat.persist.PrimaryIndex;
 import com.yahoo.db.DBHandler;
 import com.yahoo.db.Dump;
-import com.yahoo.db.Page_id_AcessLog;
 import com.yahoo.ycsb.measurements.ResultHandler;
 import java.util.HashMap;
 import java.util.Map;
