@@ -120,7 +120,7 @@ public class Measurements
 	}
 
       /**
-       * Report a return code for a single DB operaiton.
+       * Report a return code for a single DB operation.
        */
 	public void reportReturnCode(String operation, int code)
 	{

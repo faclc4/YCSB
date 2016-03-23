@@ -1,16 +1,14 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package com.yahoo.ycsb;
 
-import com.sleepycat.je.DatabaseException;
-import com.sleepycat.persist.EntityCursor;
-import com.sleepycat.persist.EntityStore;
-import com.sleepycat.persist.PrimaryIndex;
-import com.yahoo.db.DBHandler;
 import com.yahoo.db.Dump;
-import com.yahoo.ycsb.measurements.ResultHandler;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.infinispan.versioning.utils.version.Version;
@@ -18,72 +16,57 @@ import org.infinispan.versioning.utils.version.VersionScalar;
 
 /**
  *
- * @author Fábio Coelho
+ * @author Fábio Coelho <fabio.a.coelho@inesctec.pt>
  */
 public class LoaderThread implements Runnable{
-       
-    DB _db;
-    boolean _speedup;
-    Workload _workload;
-    ClientThreadState _workloadstate;
-    Properties _props;
-    DBHandler bd_handler= null;
-    EntityStore dump = null;
-    PrimaryIndex dump_handler = null;
-    public OpCounter opscounter=null;    
-    Workload workload=null;
-    
+    DB db;
     private final String table="usertable";
+    Dump record;
+    OpCounter opcounter;
+    HashMap<Version,ByteIterator> content;
+    AtomicLong byteounter;
     
-    
-    public LoaderThread(String db_path,OpCounter opcounter,DB db, Workload workload,ExecutorService thread_pool,Properties props){
-        try {
-            this.bd_handler = new DBHandler(db_path);
-            
-            dump = bd_handler.getDump();
-            dump_handler = dump.getPrimaryIndex(String.class, Dump.class);
-            
-            this._db=db;
-            _db.init();
-            
-            this.opscounter=opcounter;
-            this.workload=workload;
-            
-            this._props=props;
-            
-        } catch (DatabaseException ex) {
-            Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (DBException ex) {
-            Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public LoaderThread(DB db,Dump record,OpCounter opcounter,AtomicLong bytecounter){
+        this.db=db;
+        this.record = record;
+        this.opcounter = opcounter;
+        this.byteounter=bytecounter;
     }
-    
     
     @Override
     public void run() {
-        try {
-            ClientThreadState state = (ClientThreadState) workload.initThread(_props,1,1);
-            ResultHandler resultHandler = state.getClient_resultHandler();
-                       
-            EntityCursor<Dump> cursor = dump_handler.entities();
+        try{
+            content = new HashMap<>();
             
-            Dump record = null;
-            HashMap<Version,ByteIterator> content = new HashMap<>();
-            
-            while((record = cursor.next())!= null){
-               for(Map.Entry<Long,Long> revision : record.getMap().entrySet()){
-                   content.put(new VersionScalar(revision.getKey()), new RandomByteIterator(revision.getValue()));
-               }
-               _db.insert(table, record.getPageId(), content);
+            if(record.getMap()!=null){  
+                
+                loop : {
+                for(Map.Entry<Long,Long> revision : record.getMap().entrySet()){
+                       content.put(new VersionScalar(revision.getKey()), new RandomByteIterator(revision.getValue()));
+                       //System.out.println("\t [version]: "+revision.getKey()+" [size] (bytes): "+revision.getValue());
+                       this.byteounter.addAndGet(revision.getValue());
+                       break loop;
+                   }
+                }
+                int res = db.insert(table, record.getPageId(), content);
+                //int res = db.read(table, record.getPageId());
+                System.out.println(record+": "+res);
+                opcounter.incrementOp();
+            }
+            else{
+                content.put(new VersionScalar(0l), new RandomByteIterator(100));  
+                System.out.println("\t [generated]: 0l [size] (bytes): 100");
+                db.insert(table, record.getPageId(), content);
+                //int res = db.read(table, record.getPageId());
+                //System.out.println(record+": "+res);
+                this.byteounter.addAndGet(100);
+                opcounter.incrementOp();
             }
             
-        } catch (DatabaseException ex) {
-            Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
-        } catch (WorkloadException ex) {
-            Logger.getLogger(DispatcherThread.class.getName()).log(Level.SEVERE, null, ex);
-        } 
+                        
+            
+        } catch (Exception ex) {
+            Logger.getLogger(WorkerThread.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
-    
-    
-    
 }

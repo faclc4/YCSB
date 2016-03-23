@@ -146,9 +146,6 @@ public class Replayer {
                 
                 OpCounter opcounter = new OpCounter();
                 
-                //starts Thread_pool
-                ExecutorService thread_pool = Executors.newCachedThreadPool();
-
 		//parse arguments
 		int argindex=0;
 
@@ -308,6 +305,10 @@ public class Replayer {
 				break;
 			}
 		}
+                
+                //starts Thread_pool with nclients:
+                ExecutorService thread_pool = Executors.newFixedThreadPool(Integer.parseInt(props.getProperty("threadcount")));
+
 
 		if (argindex!=args.length)
 		{
@@ -413,7 +414,7 @@ public class Replayer {
                                 System.exit(0);
                         }
                         //Initiates the Loader Thread.
-                        Thread loader_thread = new Thread(new LoaderThread(db_path,opcounter,db,workload,thread_pool,props));
+                        Thread loader_thread = new Thread(new LoadDispatcherThread(db_path,opcounter,db,workload,thread_pool,props));
                         loader_thread.start();
                         loader_thread.join();
                         

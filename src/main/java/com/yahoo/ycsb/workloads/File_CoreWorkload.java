@@ -23,7 +23,6 @@ import com.yahoo.ycsb.measurements.ResultHandler;
 import com.yahoo.ycsb.measurements.ResultStorage;
 import org.infinispan.versioning.utils.version.Version;
 import org.infinispan.versioning.utils.version.VersionScalar;
-import redis.clients.jedis.Jedis;
 
 import java.io.*;
 import java.util.*;
@@ -528,7 +527,7 @@ public class File_CoreWorkload extends Workload {
         use_file_columns = Boolean.parseBoolean(p.getProperty(USE_FILE_COLUMNS_PROPERTY, USE_FILE_COLUMNS_DEFAULT_PROPERTY));
         
         size_scale = Integer.valueOf(p.getProperty(SIZE_SCALE_PROPERTY,SIZE_SCALE_PROPERTY_DEFAULT));
-        /*
+        
         articles = new ArrayList<String>();
 
         sorted_versions = new ArrayList<Long>();
@@ -551,7 +550,7 @@ public class File_CoreWorkload extends Workload {
         String oldIds_file_path = p.getProperty(OLDID_FILE_PROPERTY);
         String sizes_file_path = p.getProperty(SIZES_FILE_PROPERTY);
         
-
+        /*
         boolean ok=false;
         try{
             if (keys_file_path != null && replay_file_path != null && oldIds_file_path != null && sizes_file_path != null) {

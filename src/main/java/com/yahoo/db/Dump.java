@@ -73,4 +73,12 @@ public class Dump {
     public Long getFirstMapIndex(){
         return (new ArrayList<Long>(this.revisionId_size.values())).get(0);
     }
+    
+    public String toString(){
+        String output = "[DUMP ITEM]: key: "+this.pageId+'\n'+'\t';
+        for(Map.Entry<Long,Long> version : this.revisionId_size.entrySet()){
+           //output = output+"["+version.getKey()+"] size (bytes) : "+version.getValue();
+        }        
+        return output;
+    }
 }

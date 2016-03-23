@@ -1,5 +1,5 @@
 /**                                                                                                                                                                                
- * Copyright (c) 2010 Yahoo! Inc. All rights reserved.                                                                                                                             
+ * Copyright (c) 209.98 Yahoo! Inc. All rights reserved.                                                                                                                             
  *                                                                                                                                                                                 
  * Licensed under the Apache License, Version 2.0 (the "License"); you                                                                                                             
  * may not use this file except in compliance with the License. You                                                                                                                
@@ -75,66 +75,60 @@ public class DBWrapper extends DB
 
     @Override
     public int read(String table, String key) {
-        long st=System.nanoTime();
+        long st=System.currentTimeMillis();
 	int res=_db.read(table,key);
-	long en=System.nanoTime();
-        int time = (int)((en-st)/1000);
-        time = (time<0) ? Integer.MAX_VALUE : time;
-	_measurements.measure("READ", time);
+	long en=System.currentTimeMillis();
+	_measurements.measure("READ", (int)(en-st));
 	_measurements.reportReturnCode("READ",res);
 	return res;
     }
 
     @Override
     public int readRange(String table, String key, Version versionA, Version versionB) {
-              long st=System.nanoTime();
+        long st = System.currentTimeMillis();
 	int res=_db.readRange(table,key,versionA,versionB);
-	long en=System.nanoTime();
-        int time = (int)((en-st)/1000);
-        time = (time<0) ? Integer.MAX_VALUE : time;
-	_measurements.measure("READ_RANGE", time);
+	long en=System.currentTimeMillis();
+	_measurements.measure("READ_RANGE", (int)(en-st));
 	_measurements.reportReturnCode("READ_RANGE",res);
 	return res;
     }
 
     @Override
     public int update(String table, String key, HashMap<Version, ByteIterator> values) {
-        long st=System.nanoTime();
+        long st=System.currentTimeMillis();
 	int res=_db.update(table,key,values);
-	long en=System.nanoTime();
-	_measurements.measure("UPDATE",(int)((en-st)/1000));
+	long en=System.currentTimeMillis();
+	_measurements.measure("UPDATE",(int)(en-st));
 	_measurements.reportReturnCode("UPDATE",res);
 	return res;
     }
 
     @Override
     public int insert(String table, String key, HashMap<Version, ByteIterator> values) {
-        long st=System.nanoTime();
+        long st=System.currentTimeMillis();
 	int res=_db.insert(table,key,values);
-	long en=System.nanoTime();
-	_measurements.measure("INSERT",(int)((en-st)/1000));
+	long en=System.currentTimeMillis();
+	_measurements.measure("INSERT",(int)(en-st));
 	_measurements.reportReturnCode("INSERT",res);
 	return res;
     }
 
     @Override
     public int delete(String table, String key) {
-        long st=System.nanoTime();
+        long st=System.currentTimeMillis();
 	int res=_db.delete(table,key);
-	long en=System.nanoTime();
-	_measurements.measure("DELETE",(int)((en-st)/1000));
+	long en=System.currentTimeMillis();
+	_measurements.measure("DELETE",(int)(en-st));
 	_measurements.reportReturnCode("DELETE",res);
 	return res;
     }
 
     @Override
     public int read(String table, String key, Version versionA) {
-        long st=System.nanoTime();
+        long st=System.currentTimeMillis();
         int res=_db.read(table,key);
-	long en=System.nanoTime();
-        int time = (int)((en-st)/1000);
-        time = (time<0) ? Integer.MAX_VALUE : time;
-	_measurements.measure("READ_PREVIOUS", time);
+	long en=System.currentTimeMillis();
+	_measurements.measure("READ_PREVIOUS", (int)(en-st));
 	_measurements.reportReturnCode("READ_PREVIOUS",res);
 	return res;
     }

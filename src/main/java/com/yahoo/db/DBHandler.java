@@ -50,7 +50,7 @@ public class DBHandler {
         try {
             env_config = new EnvironmentConfig();
             env_config.setAllowCreate(true);
-            env_config.setCacheSize(500000000);
+            //env_config.setCacheSize(500000000);
             env_config.setConfigParam("je.log.fileMax","250000000");
             
             //Environment = SQL Database;
