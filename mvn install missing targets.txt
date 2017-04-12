@@ -1,0 +1,1 @@
+mvn install:install-file -DgroupId=org.infinispan -DartifactId=infinispan-versioning -Dversion=7.0.1-SNAPSHOT -Dpackaging=jar -Dfile=/Users/fabio/Documents/Leads-infinispan-master/versioning/target/infinispan-versioning.jar -DgeneratePom=true
