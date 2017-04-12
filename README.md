@@ -3,7 +3,7 @@ YCSB - Wikipedia dump + traces
 To compile YCSB:
 
 ```bash
-mvn clean package assembly:single
+mvn clean package
 ```
 
 ====
